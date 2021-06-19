@@ -18,7 +18,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ChatClient interface {
-	SendMessage(ctx context.Context, in *MessageRequest, opts ...grpc.CallOption) (*MessageResponse, error)
+	SendMessage(ctx context.Context, in *MessageRequest, opts ...grpc.CallOption) (*Empty, error)
 	Connect(ctx context.Context, in *ConnectRequest, opts ...grpc.CallOption) (Chat_ConnectClient, error)
 }
 
@@ -30,8 +30,8 @@ func NewChatClient(cc grpc.ClientConnInterface) ChatClient {
 	return &chatClient{cc}
 }
 
-func (c *chatClient) SendMessage(ctx context.Context, in *MessageRequest, opts ...grpc.CallOption) (*MessageResponse, error) {
-	out := new(MessageResponse)
+func (c *chatClient) SendMessage(ctx context.Context, in *MessageRequest, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
 	err := c.cc.Invoke(ctx, "/chat.Chat/SendMessage", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -75,7 +75,7 @@ func (x *chatConnectClient) Recv() (*MessageResponse, error) {
 // All implementations must embed UnimplementedChatServer
 // for forward compatibility
 type ChatServer interface {
-	SendMessage(context.Context, *MessageRequest) (*MessageResponse, error)
+	SendMessage(context.Context, *MessageRequest) (*Empty, error)
 	Connect(*ConnectRequest, Chat_ConnectServer) error
 	mustEmbedUnimplementedChatServer()
 }
@@ -84,7 +84,7 @@ type ChatServer interface {
 type UnimplementedChatServer struct {
 }
 
-func (UnimplementedChatServer) SendMessage(context.Context, *MessageRequest) (*MessageResponse, error) {
+func (UnimplementedChatServer) SendMessage(context.Context, *MessageRequest) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendMessage not implemented")
 }
 func (UnimplementedChatServer) Connect(*ConnectRequest, Chat_ConnectServer) error {
