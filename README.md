@@ -6,5 +6,5 @@
     go get -u google.golang.org/grpc
     go get -u google.golang.org/genproto
     go get -u gorm.io/gorm
-    gorm.io/driver/sqlite
+    go get -u gorm.io/driver/sqlite
   ```
