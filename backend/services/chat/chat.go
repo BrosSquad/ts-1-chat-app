@@ -73,7 +73,7 @@ func (c *chatService) Connect(req *pb.ConnectRequest, client pb.Chat_ConnectServ
 				Username: message.User.Username,
 			},
 			Text:      message.Text,
-			CreatedAt: message.CreatedAt.Format(time.RFC1123Z),
+			CreatedAt: message.CreatedAt.Format(time.RFC3339),
 		})
 	}
 
@@ -86,7 +86,7 @@ func (c *chatService) Connect(req *pb.ConnectRequest, client pb.Chat_ConnectServ
 					Username: um.User.Username,
 				},
 				Text:      um.Message.Text,
-				CreatedAt: um.Message.CreatedAt.Format(time.RFC1123Z),
+				CreatedAt: um.Message.CreatedAt.Format(time.RFC3339),
 			})
 
 		case <-client.Context().Done():
