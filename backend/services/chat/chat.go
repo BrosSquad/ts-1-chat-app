@@ -67,7 +67,7 @@ func (c *chatService) Connect(req *pb.ConnectRequest, client pb.Chat_ConnectServ
 	}
 
 	for _, message := range messages {
-		client.SendMsg(&pb.MessageResponse{
+		client.Send(&pb.MessageResponse{
 			User: &pb.User{
 				Id:       message.User.ID,
 				Username: message.User.Username,
@@ -80,7 +80,7 @@ func (c *chatService) Connect(req *pb.ConnectRequest, client pb.Chat_ConnectServ
 	for {
 		select {
 		case um := <-c.messages:
-			client.SendMsg(&pb.MessageResponse{
+			client.Send(&pb.MessageResponse{
 				User: &pb.User{
 					Id:       um.User.ID,
 					Username: um.User.Username,
