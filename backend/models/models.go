@@ -3,6 +3,6 @@ package models
 import "time"
 
 type Model struct {
-	ID uint64
+	ID        uint64
 	CreatedAt time.Time
 }

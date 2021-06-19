@@ -19,7 +19,7 @@ func main() {
 		log.Fatalf("error connecting to SQLITE3 Database: %v", err)
 	}
 
- 	err = db.AutoMigrate(&models.User{}, &models.Message{})
+	err = db.AutoMigrate(&models.User{}, &models.Message{})
 
 	if err != nil {
 		log.Fatalf("Failed to migrate DATABASE: %v", err)

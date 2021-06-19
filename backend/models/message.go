@@ -2,6 +2,8 @@ package models
 
 type Message struct {
 	Model
-	Text string
+	Text   string
 	UserID uint64
+
+	User User
 }

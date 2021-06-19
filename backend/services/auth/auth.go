@@ -11,7 +11,7 @@ import (
 	"github.com/BrosSquad/ts-1-chat-app/backend/services/pb"
 )
 
-type authService struct{
+type authService struct {
 	db *gorm.DB
 	pb.UnimplementedAuthServer
 }
@@ -23,7 +23,7 @@ func New(db *gorm.DB) pb.AuthServer {
 }
 
 func (a *authService) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.RegisterResponse, error) {
-	user := models.User {
+	user := models.User{
 		Username: req.GetUsername(),
 	}
 
@@ -35,7 +35,7 @@ func (a *authService) Register(ctx context.Context, req *pb.RegisterRequest) (*p
 
 	return &pb.RegisterResponse{
 		User: &pb.User{
-			Id: user.ID,
+			Id:       user.ID,
 			Username: user.Username,
 		},
 	}, nil
