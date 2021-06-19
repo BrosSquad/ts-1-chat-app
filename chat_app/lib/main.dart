@@ -1,3 +1,4 @@
+import 'package:chat_app/grpc_client.dart';
 import 'package:flutter/material.dart';
 
 import './screens/register_screen.dart';
@@ -12,7 +13,9 @@ class ChatApp extends StatelessWidget {
     return MaterialApp(
       title: 'Chat',
       theme: ThemeData.dark(),
-      home: RegisterScreen(),
+      home: GRPCClient(
+        child: RegisterScreen(),
+      ),
     );
   }
 }

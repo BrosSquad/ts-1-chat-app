@@ -1,3 +1,5 @@
+import 'package:chat_app/grpc_client.dart';
+import 'package:chat_app/services/auth.dart';
 import 'package:flutter/material.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -22,12 +24,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
-  void onRegister() async {
-    print('Registering user... ${_controller.value.text}');
+  void onRegister(AuthService authService) async {
+    String username = _controller.value.text.trim();
+    if (username.isNotEmpty) {
+      await authService.register(username);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    AuthService authService = GRPCClient.of(context).authService;
+
     return Scaffold(
       body: Center(
         child: Column(
@@ -64,7 +71,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     children: [
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: onRegister,
+                          onPressed: () => onRegister(authService),
                           child: Text('Enter chat'),
                         ),
                       ),
