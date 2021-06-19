@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+import "user.proto";
+
+// Can be project name or whateva
+package chat;
+
+// Define where to generate output
+option go_package = "github.com/BrosSquad/ts-1-chat-app/backend/services/pb";
+
+message MessageRequest {
+    string user_id = 1;
+    string text = 2;
+}
+
+message MessageResponse {
+    user.User user = 1;
+    string text = 2;
+    string created_at = 3;
+}
+
+message ConnectRequest {
+    uint64 user_id = 1;
+}
+
+service Chat {
+    rpc SendMessage (MessageRequest) returns (MessageResponse);
+    rpc Connect (ConnectRequest) returns (stream MessageResponse);
+}
