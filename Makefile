@@ -1,3 +1,8 @@
+.PHONY: build
+build:
+	@go build -o bin/server backend/main.go
+
+
 .PHONY: protoc-go
 protoc-go:
 	cd proto/ && protoc -I. --go_out=../backend/services/pb \
