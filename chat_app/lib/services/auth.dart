@@ -4,8 +4,8 @@ import 'package:grpc/grpc.dart';
 
 class AuthService {
   late AuthClient client;
-  late Int64 userID;
-  late String username;
+  Int64 userID = Int64(0);
+  String username = '';
 
   AuthService(ClientChannel channel) {
     client = AuthClient(channel);
@@ -25,4 +25,6 @@ class AuthService {
       print('Error registering user $error');
     }
   }
+
+  bool isLoggedIn() => !this.userID.isZero && this.username.isNotEmpty;
 }
