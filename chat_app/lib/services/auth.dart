@@ -3,18 +3,18 @@ import 'package:fixnum/fixnum.dart';
 import 'package:grpc/grpc.dart';
 
 class AuthService {
-  late AuthClient client;
+  late AuthClient _client;
   Int64 userID = Int64(0);
   String username = '';
 
   AuthService(ClientChannel channel) {
-    client = AuthClient(channel);
+    _client = AuthClient(channel);
   }
 
   Future<void> register(String username) async {
     try {
       RegisterResponse res =
-          await client.register(RegisterRequest(username: username));
+          await _client.register(RegisterRequest(username: username));
 
       this.username = res.user.username;
       this.userID = res.user.id;

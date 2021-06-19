@@ -1,72 +1,10 @@
 import 'package:chat_app/proto/chat.pb.dart';
-import 'package:chat_app/proto/user.pb.dart';
+import 'package:chat_app/services/chat.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:flutter/material.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 import '../grpc_client.dart';
-
-User userA = User(username: 'Misko');
-User userB = User(username: 'Pisko');
-
-List<MessageResponse> messages = [
-  MessageResponse(
-    createdAt: 'Sat, 19 Jun 2021 20:16:24 +0200',
-    text:
-        'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
-    user: userA,
-  ),
-  MessageResponse(
-    createdAt: 'Sat, 19 Jun 2021 20:16:24 +0200',
-    text: 'Eo buraz',
-    user: userB,
-  ),
-  MessageResponse(
-    createdAt: 'Sat, 19 Jun 2021 20:16:24 +0200',
-    text: 'Pisem jebozovni stack',
-    user: userB,
-  ),
-  MessageResponse(
-    createdAt: 'Sat, 19 Jun 2021 20:16:24 +0200',
-    text: 'Ne seeeeri',
-    user: userA,
-  ),
-  MessageResponse(
-    createdAt: 'Sat, 19 Jun 2021 20:16:24 +0200',
-    text: 'Ne seeeeri',
-    user: userA,
-  ),
-  MessageResponse(
-    createdAt: 'Sat, 19 Jun 2021 20:16:24 +0200',
-    text: 'Ne seeeeri',
-    user: userA,
-  ),
-  MessageResponse(
-    createdAt: 'Sat, 19 Jun 2021 20:16:24 +0200',
-    text: 'Ne seeeeri',
-    user: userA,
-  ),
-  MessageResponse(
-    createdAt: 'Sat, 19 Jun 2021 20:16:24 +0200',
-    text: 'Ne seeeeri',
-    user: userA,
-  ),
-  MessageResponse(
-    createdAt: 'Sat, 19 Jun 2021 20:16:24 +0200',
-    text: 'Ne seeeeri',
-    user: userA,
-  ),
-  MessageResponse(
-    createdAt: 'Sat, 19 Jun 2021 20:16:24 +0200',
-    text: 'Ne seeeeri',
-    user: userA,
-  ),
-  MessageResponse(
-    createdAt: 'Sat, 19 Jun 2021 20:16:24 +0200',
-    text: 'Ne seeeeri',
-    user: userA,
-  ),
-];
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({Key? key}) : super(key: key);
@@ -77,6 +15,7 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   late TextEditingController _controller;
+  List<MessageResponse> messages = [];
 
   @override
   void initState() {
@@ -90,10 +29,14 @@ class _ChatScreenState extends State<ChatScreen> {
     super.dispose();
   }
 
-  void sendMessage() {}
+  Future<void> sendMessage(
+      {required ChatService service, required Int64 userID}) async {
+    await service.sendMessage(userID: userID, text: _controller.value.text);
+  }
 
   @override
   Widget build(BuildContext context) {
+    ChatService service = GRPCClient.of(context).chatService;
     String username = GRPCClient.of(context).authService.username;
     Int64 userID = GRPCClient.of(context).authService.userID;
 
@@ -102,7 +45,7 @@ class _ChatScreenState extends State<ChatScreen> {
         title: Text(username),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: sendMessage,
+        onPressed: () => sendMessage(service: service, userID: userID),
         child: Icon(Icons.send),
       ),
       body: SafeArea(
@@ -111,14 +54,28 @@ class _ChatScreenState extends State<ChatScreen> {
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: ListView.builder(
-                  itemCount: messages.length,
-                  shrinkWrap: true,
-                  reverse: true,
-                  padding: EdgeInsets.only(top: 10, bottom: 10),
-                  physics: AlwaysScrollableScrollPhysics(),
-                  itemBuilder: (context, index) =>
-                      MessageBubble(message: messages[index]),
+                child: StreamBuilder<MessageResponse>(
+                  stream: service.connect(userID),
+                  builder: (context, snapshot) {
+                    print(snapshot.requireData);
+                    if (!snapshot.hasData) {
+                      return Center(
+                        child: CircularProgressIndicator(),
+                      );
+                    }
+                    messages.add(snapshot.data!);
+                    print(messages.length);
+                    // print('ADDED MSG');
+                    return ListView(
+                      shrinkWrap: true,
+                      reverse: true,
+                      padding: EdgeInsets.only(top: 10, bottom: 10),
+                      physics: AlwaysScrollableScrollPhysics(),
+                      children: messages
+                          .map((message) => MessageBubble(message: message))
+                          .toList(),
+                    );
+                  },
                 ),
               ),
             ),
@@ -146,8 +103,10 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 }
 
+const MESSAGE_MAX_CHARS = 20;
+
 class MessageBubble extends StatelessWidget {
-  const MessageBubble({
+  MessageBubble({
     Key? key,
     required this.message,
   }) : super(key: key);
@@ -156,11 +115,11 @@ class MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isRight = this.message.user.username == 'Misko';
+
     return Container(
       child: Align(
-        alignment: message.user.username == 'Misko'
-            ? Alignment.topRight
-            : Alignment.topLeft,
+        alignment: isRight ? Alignment.topRight : Alignment.topLeft,
         child: Container(
           constraints: BoxConstraints(
             minWidth: 184.0,
@@ -170,21 +129,32 @@ class MessageBubble extends StatelessWidget {
           margin: EdgeInsets.symmetric(vertical: 4),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16.0),
-            color: message.user.username == 'Misko'
+            color: isRight
                 ? Theme.of(context).primaryColorLight
                 : Theme.of(context).primaryColor,
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(message.text),
-              SizedBox(height: 4.0),
-              Align(
-                alignment: Alignment.bottomRight,
-                child: Text(timeago.format(DateTime.now())),
-              ),
-            ],
-          ),
+          child: message.text.length > MESSAGE_MAX_CHARS
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(message.text),
+                    SizedBox(height: 4.0),
+                    Align(
+                      alignment: Alignment.bottomRight,
+                      child: Text(timeago.format(DateTime.now())),
+                    ),
+                  ],
+                )
+              : Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(message.text),
+                    Align(
+                      alignment: Alignment.bottomRight,
+                      child: Text(timeago.format(DateTime.now())),
+                    ),
+                  ],
+                ),
         ),
       ),
     );
