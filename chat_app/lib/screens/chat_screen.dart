@@ -7,7 +7,11 @@ import 'package:timeago/timeago.dart' as timeago;
 import '../grpc_client.dart';
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({Key? key}) : super(key: key);
+  const ChatScreen({Key? key, required this.service, required this.userID})
+      : super(key: key);
+
+  final ChatService service;
+  final Int64 userID;
 
   @override
   _ChatScreenState createState() => _ChatScreenState();
@@ -16,11 +20,13 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   late TextEditingController _controller;
   List<MessageResponse> messages = [];
+  late Stream<MessageResponse> stream;
 
   @override
   void initState() {
     super.initState();
     _controller = TextEditingController();
+    this.stream = widget.service.connect(widget.userID);
   }
 
   @override
@@ -29,23 +35,22 @@ class _ChatScreenState extends State<ChatScreen> {
     super.dispose();
   }
 
-  Future<void> sendMessage(
-      {required ChatService service, required Int64 userID}) async {
-    await service.sendMessage(userID: userID, text: _controller.value.text);
+  Future<void> sendMessage({required Int64 userID}) async {
+    await widget.service
+        .sendMessage(userID: userID, text: _controller.value.text);
+    _controller.clear();
   }
 
   @override
   Widget build(BuildContext context) {
-    ChatService service = GRPCClient.of(context).chatService;
     String username = GRPCClient.of(context).authService.username;
-    Int64 userID = GRPCClient.of(context).authService.userID;
 
     return Scaffold(
       appBar: AppBar(
         title: Text(username),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => sendMessage(service: service, userID: userID),
+        onPressed: () => sendMessage(userID: widget.userID),
         child: Icon(Icons.send),
       ),
       body: SafeArea(
@@ -55,7 +60,7 @@ class _ChatScreenState extends State<ChatScreen> {
               child: Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: StreamBuilder<MessageResponse>(
-                  stream: service.connect(userID),
+                  stream: this.stream,
                   builder: (context, snapshot) {
                     print(snapshot.requireData);
                     if (!snapshot.hasData) {
@@ -68,11 +73,14 @@ class _ChatScreenState extends State<ChatScreen> {
                     // print('ADDED MSG');
                     return ListView(
                       shrinkWrap: true,
-                      reverse: true,
+                      reverse: false,
                       padding: EdgeInsets.only(top: 10, bottom: 10),
                       physics: AlwaysScrollableScrollPhysics(),
                       children: messages
-                          .map((message) => MessageBubble(message: message))
+                          .map((message) => MessageBubble(
+                                message: message,
+                                userID: widget.userID,
+                              ))
                           .toList(),
                     );
                   },
@@ -109,13 +117,15 @@ class MessageBubble extends StatelessWidget {
   MessageBubble({
     Key? key,
     required this.message,
+    required this.userID,
   }) : super(key: key);
 
   final MessageResponse message;
+  final Int64 userID;
 
   @override
   Widget build(BuildContext context) {
-    final bool isRight = this.message.user.username == 'Misko';
+    final bool isRight = this.message.user.id == this.userID;
 
     return Container(
       child: Align(
@@ -151,7 +161,8 @@ class MessageBubble extends StatelessWidget {
                     Text(message.text),
                     Align(
                       alignment: Alignment.bottomRight,
-                      child: Text(timeago.format(DateTime.now())),
+                      child: Text(
+                          timeago.format(DateTime.parse(message.createdAt))),
                     ),
                   ],
                 ),

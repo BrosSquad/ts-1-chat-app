@@ -1,6 +1,7 @@
 import 'package:chat_app/grpc_client.dart';
 import 'package:chat_app/screens/chat_screen.dart';
 import 'package:chat_app/services/auth.dart';
+import 'package:chat_app/services/chat.dart';
 import 'package:flutter/material.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -35,11 +36,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     AuthService authService = GRPCClient.of(context).authService;
+    ChatService chatService = GRPCClient.of(context).chatService;
 
     if (authService.isLoggedIn()) {
       Navigator.of(context).push(
         MaterialPageRoute(builder: (context) {
-          return ChatScreen();
+          return ChatScreen(
+            service: chatService,
+            userID: authService.userID,
+          );
         }),
       );
     }
@@ -85,7 +90,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               await onRegister(authService);
                               Navigator.of(context).push(
                                 MaterialPageRoute(builder: (context) {
-                                  return ChatScreen();
+                                  return ChatScreen(
+                                    service: chatService,
+                                    userID: authService.userID,
+                                  );
                                 }),
                               );
                             },
