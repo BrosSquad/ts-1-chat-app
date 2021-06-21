@@ -1,0 +1,10 @@
+logging:
+  error:
+    enabled: true
+  debug:
+    enabled: true
+  info:
+    enabled: true
+
+chat:
+  buffer: 10000

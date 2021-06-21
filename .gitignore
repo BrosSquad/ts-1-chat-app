@@ -1,4 +1,6 @@
 .vscode/
 .idea/
-db/database.sqlite
+*.sqlite
 bin/
+logs/
+db/

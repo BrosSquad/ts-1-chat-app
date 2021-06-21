@@ -1,6 +1,6 @@
 .PHONY: build
 build:
-	@go build -o bin/server backend/main.go
+	@go build -o bin/server backend/cmd/server/main.go
 
 
 .PHONY: protoc-go
