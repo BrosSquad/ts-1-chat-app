@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/rs/zerolog"
+	"gorm.io/gorm/logger"
 )
 
 func Parse(level string) zerolog.Level {
@@ -27,4 +28,17 @@ func Parse(level string) zerolog.Level {
 	}
 
 	return zerolog.Disabled
+}
+
+func ParseDBLogLevel(level string) logger.LogLevel {
+	switch level {
+	case "info":
+		return logger.Info
+	case "warm":
+		return logger.Warn
+	case "error":
+		return logger.Error
+	default:
+		return logger.Silent
+	}
 }

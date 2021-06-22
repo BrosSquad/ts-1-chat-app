@@ -18,8 +18,8 @@ func ConfigureDefaultLogger(ctx context.Context, level string, writer io.Writer,
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 
 	if !toJson {
-		log.Logger = log.Output(zerolog.ConsoleWriter{Out: writer})
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: writer})
 	} else {
-		log.Logger = log.Output(writer)
+	log.Logger = log.Output(writer)
 	}
 }

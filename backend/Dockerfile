@@ -1,17 +1,18 @@
 FROM golang:1.16 as builder
 
-COPY . /app
+COPY ./backend /app
 
-ENV CGO_ENABLED=0
+WORKDIR /app
 
-RUN go build -o bin/server main.go
+RUN go build -o ../bin/server ./cmd/server/main.go
 
+FROM golang:1.16
 
-FROM alpine:3.19
+COPY --from=builder /bin/server /bin/server
+COPY ./backend/config.example.yml /etc/chat-app/config.yml
 
-COPY --from=builder /app/bin/server /app/server
-
-RUN mkdir -p /var/chat-app/db && mkdir -p /var/logs/chat-app/
+RUN mkdir -p /var/chat-app/db && \
+    mkdir -p /var/logs/chat-app/ && touch /var/chat-app/db/database.sqlite
 
 ARG PORT=3000
 
@@ -20,4 +21,4 @@ ENV CONSOLE_LOGGER_LEVEL=trace
 
 EXPOSE ${PORT}
 
-CMD ["/app/server", "-db", "/var/chat-app/db", "-logs", "/var/logs/chat-app", "-level", "${CONSOLE_LOGGER_LEVEL}"]
+ENTRYPOINT ["server", "-db", "/var/chat-app/db/database.sqlite", "-logs", "/var/logs/chat-app", "-level", "trace", "-config", "/etc/chat-app"]

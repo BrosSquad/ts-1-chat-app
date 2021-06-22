@@ -5,6 +5,11 @@ logging:
     enabled: true
   info:
     enabled: true
+  db:
+    enabled: true
+    level: error # info, warn, error, silent
+    color: true
+    slow_query: 50ms
 
 chat:
   buffer: 10000

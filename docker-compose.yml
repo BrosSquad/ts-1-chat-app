@@ -1,0 +1,17 @@
+version: '3.4'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: ./backend/Dockerfile
+      args:
+        PORT: 3000
+    environment:
+      SERVER_ADDR: '0.0.0.0:3000'
+      CONSOLE_LOGGER_LEVEL: trace
+    ports:
+      - 3000:3000
+    volumes:
+      - ./logs:/var/logs/chat-app
+      - ./db:/var/chat-app/db

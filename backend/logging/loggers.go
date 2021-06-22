@@ -21,8 +21,16 @@ type (
 	}
 )
 
-func NewErrorLogger(rootDir string, toConsole bool) *Error {
-	path, output, logger := createZerologLogger("error", rootDir, "error", toConsole)
+func NewErrorLogger(rootDir string, enabled, toConsole bool) *Error {
+	var level string
+
+	if enabled {
+		level = "error"
+	} else {
+		level = "disabled"
+	}
+
+	path, output, logger := createZerologLogger("error", rootDir, level, toConsole)
 	return &Error{
 		Logger: logger,
 		DefaultLogger: DefaultLogger{
@@ -32,8 +40,16 @@ func NewErrorLogger(rootDir string, toConsole bool) *Error {
 	}
 }
 
-func NewInfoLogger(rootDir string, toConsole bool) *Info {
-	path, output, logger := createZerologLogger("info", rootDir, "info", toConsole)
+func NewInfoLogger(rootDir string, enabled, toConsole bool) *Info {
+	var level string
+
+	if enabled {
+		level = "info"
+	} else {
+		level = "disabled"
+	}
+
+	path, output, logger := createZerologLogger("info", rootDir, level, toConsole)
 	return &Info{
 		Logger: logger,
 		DefaultLogger: DefaultLogger{
@@ -43,8 +59,16 @@ func NewInfoLogger(rootDir string, toConsole bool) *Info {
 	}
 }
 
-func NewDebugLogger(rootDir string) *Debug {
-	path, output, logger := createZerologLogger("debug", rootDir, "debug", true)
+func NewDebugLogger(rootDir string, enabled bool) *Debug {
+	var level string
+
+	if enabled {
+		level = "debug"
+	} else {
+		level = "disabled"
+	}
+
+	path, output, logger := createZerologLogger("debug", rootDir, level, true)
 	return &Debug{
 		Logger: logger,
 		DefaultLogger: DefaultLogger{
