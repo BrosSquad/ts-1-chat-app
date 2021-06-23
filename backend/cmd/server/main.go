@@ -5,8 +5,8 @@ import (
 	"flag"
 	"net"
 	"os"
+	"os/signal"
 	"path"
-	"path/filepath"
 
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
@@ -32,6 +32,20 @@ var (
 	logToConsole bool
 )
 
+func init() {
+	flag.StringVar(&dbPath, "db", "./database.sqlite", "Path to the SQLite Database file")
+	flag.StringVar(&configPath, "config", ".", "Path to the configuration directory")
+	flag.StringVar(&logsPath, "logs", "./logs", "Path to the root logs directory")
+	flag.StringVar(&logLevel, "level", "trace", "Console loggger default logging level")
+	flag.StringVar(&addr, "addr", "", "Address of the HTTP2 gRPC Server")
+
+	flag.BoolVar(&logJson, "json", false, "Log global logs as json")
+	flag.BoolVar(&logToFile, "file", false, "Log global logs output to file")
+	flag.BoolVar(&logToConsole, "console", true, "All logs output to file and console")
+
+	flag.Parse()
+}
+
 func getServerAddr(flag string) string {
 	if flag != "" {
 		return os.ExpandEnv(flag)
@@ -46,39 +60,13 @@ func getServerAddr(flag string) string {
 	return ":3000"
 }
 
-func getAbsolutePath(path string) string {
-	var err error
-
-	if !filepath.IsAbs(path) {
-		path, err = filepath.Abs(path)
-
-		if err != nil {
-			log.Fatal().
-				Err(err).
-				Msgf("Cannot get absolute path of %s", dbPath)
-		}
-
-		return path
-	}
-
-	return ""
-}
-
 func main() {
 	var err error
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
 
-	flag.StringVar(&dbPath, "db", "./database.sqlite", "Path to the SQLite Database file")
-	flag.StringVar(&configPath, "config", ".", "Path to the configuration directory")
-	flag.StringVar(&logsPath, "logs", "./logs", "Path to the root logs directory")
-	flag.StringVar(&logLevel, "level", "trace", "Console loggger default logging level")
-	flag.StringVar(&addr, "addr", "", "Address of the HTTP2 gRPC Server")
+	exit := make(chan os.Signal, 1)
 
-	flag.BoolVar(&logJson, "json", false, "Log global logs as json")
-	flag.BoolVar(&logToFile, "file", false, "Log global logs output to file")
-	flag.BoolVar(&logToConsole, "console", true, "All logs output to file and console")
-
-	flag.Parse()
+	signal.Notify(exit, os.Interrupt)
 
 	if logToFile {
 		path := path.Join(logsPath, "global.jsonl")
@@ -92,20 +80,14 @@ func main() {
 
 		defer output.Close()
 
-		logging.ConfigureDefaultLogger(ctx, logLevel, output, logJson)
+		logging.ConfigureDefaultLogger(ctx, logLevel, output, logToConsole, logJson)
 	} else {
-		logging.ConfigureDefaultLogger(ctx, logLevel, nil, logJson)
+		logging.ConfigureDefaultLogger(ctx, logLevel, nil, logToConsole, logJson)
 	}
-
-	dbPath = getAbsolutePath(dbPath)
 
 	log.Trace().Str("dbPath", dbPath).Msg("Path to Database")
 
-	logsPath = getAbsolutePath(logsPath)
-
 	log.Trace().Str("logsPath", logsPath).Msg("Path to Logs")
-
-	configPath = getAbsolutePath(configPath)
 
 	log.Trace().
 		Str("configPath", configPath).
@@ -142,18 +124,28 @@ func main() {
 
 	services.Register(grpcServer, container)
 
-	// go func() {
+	go func() {
+		err = grpcServer.Serve(listener)
 
-	err = grpcServer.Serve(listener)
+		if err != nil {
+			log.Fatal().
+				Err(err).
+				Msg("error while starting grpc server")
+		}
+	}()
 
-	if err != nil {
-		log.Fatal().
-			Err(err).
-			Msg("error while starting grpc server")
-	}
-	// }()
-
-	log.Trace().
+	log.Info().
 		Str("addr", addr).
 		Msg("Server started")
+
+	<-exit
+	log.Trace().Msg("Signal Interrupt detected")
+
+	cancel()
+
+	log.Debug().Msg("Stopping gRPC server")
+
+	grpcServer.GracefulStop()
+
+	log.Trace().Msg("Exiting")
 }

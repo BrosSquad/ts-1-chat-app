@@ -6,13 +6,27 @@ import (
 	"path/filepath"
 )
 
-func CreatePath(path string, perm fs.FileMode) (string, error) {
+func GetAbsolutePath(path string) (string, error) {
 	var err error
+
 	if !filepath.IsAbs(path) {
 		path, err = filepath.Abs(path)
+
 		if err != nil {
 			return "", err
 		}
+
+		return path, nil
+	}
+
+	return "", err
+}
+
+func CreatePath(path string, perm fs.FileMode) (string, error) {
+	path, err := GetAbsolutePath(path)
+
+	if err != nil {
+		return "", err
 	}
 
 	directory := filepath.Dir(path)
@@ -44,7 +58,7 @@ func CreateLogFile(path string, perm fs.FileMode) (file *os.File, err error) {
 		return nil, err
 	}
 
-	file, err = os.OpenFile(path, os.O_APPEND, perm)
+	file, err = os.OpenFile(path, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
 
 	return
 }

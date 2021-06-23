@@ -17,7 +17,7 @@ import (
 
 func (c *container) GetDatabase() *gorm.DB {
 	if c.db == nil {
-		_, err := utils.CreateLogFile(c.DbPath, 0744)
+		_, err := utils.CreatePath(c.DbPath, 0744)
 
 		if err != nil {
 			log.Fatal().Err(err).Msg("Error while creating database folder")

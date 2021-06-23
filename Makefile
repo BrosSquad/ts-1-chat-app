@@ -1,7 +1,20 @@
 .PHONY: build
 build:
 	@cd backend/ && go build -o ../bin/server ./cmd/server/main.go
+	cp backend/config.example.yml ./bin/config.yml
+	mkdir ./bin/logs
+	mkdir ./bin/db
+	echo './server -db ./db/database.sqlite -logs ./logs -config . -file -console -level info' >> ./bin/start
+	chmod +x ./bin/start
 
+run:
+	cd backend && go run cmd/server/main.go \
+		-db ../db/database.sqlite \
+		-logs ../logs \
+		-config .. \
+		-level trace \
+		-file \
+		-console
 
 .PHONY: protoc-go
 protoc-go:
