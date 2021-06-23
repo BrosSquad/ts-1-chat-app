@@ -14,6 +14,11 @@ logging:
 chat:
   buffer: 10000
 
+database:
+  driver: sqlite
+  sqlite:
+    path: ./db/database.sqlite
+
 password:
   driver: bcrypt
   bcrypt:

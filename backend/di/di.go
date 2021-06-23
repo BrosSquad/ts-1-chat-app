@@ -12,7 +12,6 @@ import (
 type (
 	Config struct {
 		LogsRoot     string
-		DbPath       string
 		LogToConsole bool
 	}
 

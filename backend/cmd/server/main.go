@@ -22,7 +22,6 @@ var (
 	Author  string = "BrosSquad Dev Team"
 
 	configPath string
-	dbPath     string
 	logsPath   string
 	logLevel   string
 	addr       string
@@ -33,7 +32,6 @@ var (
 )
 
 func init() {
-	flag.StringVar(&dbPath, "db", "./database.sqlite", "Path to the SQLite Database file")
 	flag.StringVar(&configPath, "config", ".", "Path to the configuration directory")
 	flag.StringVar(&logsPath, "logs", "./logs", "Path to the root logs directory")
 	flag.StringVar(&logLevel, "level", "trace", "Console loggger default logging level")
@@ -85,7 +83,6 @@ func main() {
 		logging.ConfigureDefaultLogger(ctx, logLevel, nil, logToConsole, logJson)
 	}
 
-	log.Trace().Str("dbPath", dbPath).Msg("Path to Database")
 
 	log.Trace().Str("logsPath", logsPath).Msg("Path to Logs")
 
@@ -96,7 +93,6 @@ func main() {
 	container := di.New(
 		di.Config{
 			LogsRoot:     logsPath,
-			DbPath:       dbPath,
 			LogToConsole: logToConsole,
 		},
 		configPath,

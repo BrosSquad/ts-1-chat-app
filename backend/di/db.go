@@ -17,15 +17,13 @@ import (
 
 func (c *container) GetDatabase() *gorm.DB {
 	if c.db == nil {
-		_, err := utils.CreatePath(c.DbPath, 0744)
-
-		if err != nil {
-			log.Fatal().Err(err).Msg("Error while creating database folder")
-		}
-
 		enabled := c.viper.GetBool("logging.db.enabled")
 
-		var logger gormlogger.Interface
+		var (
+			logger gormlogger.Interface
+			db     *gorm.DB
+			err    error
+		)
 
 		slowQuery := c.viper.GetDuration("logging.db.slow_query")
 		loggingLevel := c.viper.GetString("logging.db.level")
@@ -58,18 +56,18 @@ func (c *container) GetDatabase() *gorm.DB {
 			Str("driver", "sqlite").
 			Msg("Creating GORM Instance")
 
-		db, err := gorm.Open(sqlite.Open(c.DbPath), &gorm.Config{
-			NowFunc:                                  time.Now().UTC,
-			Logger:                                   logger,
-			PrepareStmt:                              true,
-			DisableForeignKeyConstraintWhenMigrating: false,
-			DisableNestedTransaction:                 true,
-		})
+		driver := c.viper.GetString("database.driver")
 
-		if err != nil {
-			log.Fatal().
-				Err(err).
-				Msg("error connecting to SQLite3 Database")
+		switch driver {
+		case "sqlite":
+			db, err = c.createSqliteDriver(logger)
+			if err != nil {
+				log.Fatal().
+					Err(err).
+					Msg("error connecting to SQLite3 Database")
+			}
+		default:
+			log.Fatal().Str("driver", driver).Msg("Not supported database driver")
 		}
 
 		log.Debug().Msg("Migrating the database")
@@ -87,4 +85,40 @@ func (c *container) GetDatabase() *gorm.DB {
 	}
 
 	return c.db
+}
+
+func (c *container) createSqliteDriver(logger gormlogger.Interface) (*gorm.DB, error) {
+	path := c.viper.GetString("database.sqlite.path")
+	dbPath, err := utils.GetAbsolutePath(path)
+
+	if err != nil {
+		log.Error().Err(err).Str("path", path).Msg("Error while getting absolute path")
+		return nil, err
+	}
+
+	_, err = utils.CreatePath(dbPath, 0744)
+
+	if err != nil {
+		log.Error().Err(err).Msg("Error while creating database folder")
+		return nil, err
+	}
+
+	db, err := gorm.Open(sqlite.Open(dbPath), getGormConfig(logger))
+
+	if err != nil {
+		log.Error().Err(err).Msg("Error while creating GORM Instance")
+		return nil, err
+	}
+
+	return db, nil
+}
+
+func getGormConfig(logger gormlogger.Interface) *gorm.Config {
+	return &gorm.Config{
+		NowFunc:                                  time.Now().UTC,
+		Logger:                                   logger,
+		PrepareStmt:                              true,
+		DisableForeignKeyConstraintWhenMigrating: false,
+		DisableNestedTransaction:                 true,
+	}
 }

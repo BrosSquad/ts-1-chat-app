@@ -9,7 +9,6 @@ build:
 
 run:
 	cd backend && go run cmd/server/main.go \
-		-db ../db/database.sqlite \
 		-logs ../logs \
 		-config .. \
 		-level trace \

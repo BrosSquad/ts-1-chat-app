@@ -1,8 +1,9 @@
 package di
 
 import (
-	"github.com/BrosSquad/ts-1-chat-app/backend/logging"
 	"github.com/rs/zerolog/log"
+
+	"github.com/BrosSquad/ts-1-chat-app/backend/logging"
 )
 
 func (c *container) GetDebugLogger() *logging.Debug {
@@ -27,7 +28,6 @@ func (c *container) GetErrorLogger() *logging.Error {
 	}
 
 	return c.errorLogger
-
 }
 
 func (c *container) GetInfoLogger() *logging.Info {
