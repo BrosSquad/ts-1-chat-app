@@ -6,6 +6,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/BrosSquad/ts-1-chat-app/backend/logging"
+	"github.com/BrosSquad/ts-1-chat-app/backend/services/password"
 )
 
 type (
@@ -22,6 +23,8 @@ type (
 		GetErrorLogger() *logging.Error
 		GetInfoLogger() *logging.Info
 
+		GetPasswordHasher() password.Hasher
+
 		GetChatBuffer() uint16
 	}
 
@@ -33,6 +36,8 @@ type (
 		errorLogger *logging.Error
 		debugLogger *logging.Debug
 		infoLogger  *logging.Info
+
+		passwordHasher password.Hasher
 	}
 )
 

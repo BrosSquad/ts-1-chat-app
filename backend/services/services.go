@@ -15,5 +15,5 @@ func Register(server grpc.ServiceRegistrar, container di.Container) {
 	debugLogger := container.GetDebugLogger()
 
 	pb.RegisterChatServer(server, chat.New(db, debugLogger, errorLogger, container.GetChatBuffer()))
-	pb.RegisterAuthServer(server, auth.New(db, errorLogger))
+	pb.RegisterAuthServer(server, auth.New(db, errorLogger, container.GetPasswordHasher()))
 }

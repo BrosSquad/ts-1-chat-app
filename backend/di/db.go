@@ -27,19 +27,36 @@ func (c *container) GetDatabase() *gorm.DB {
 
 		var logger gormlogger.Interface
 
+		slowQuery := c.viper.GetDuration("logging.db.slow_query")
+		loggingLevel := c.viper.GetString("logging.db.level")
+		colors := c.viper.GetBool("logging.db.color")
+
+		log.Trace().
+			Bool("enabled", enabled).
+			Bool("colors", colors).
+			Str("logging_level", loggingLevel).
+			Str("slow_query", slowQuery.String()).
+			Msg("Database logging")
+
 		if enabled {
 			logger = gormlogger.New(
 				stdlog.New(os.Stdout, "\r\n", stdlog.LstdFlags),
 				gormlogger.Config{
-					SlowThreshold:             c.viper.GetDuration("logging.db.slow_query"),
-					LogLevel:                  logging.ParseDBLogLevel(c.viper.GetString("logging.db.level")),
+					SlowThreshold:             slowQuery,
+					LogLevel:                  logging.ParseDBLogLevel(loggingLevel),
 					IgnoreRecordNotFoundError: true,
-					Colorful:                  c.viper.GetBool("logging.db.color"),
+					Colorful:                  colors,
 				},
 			)
+
+			log.Trace().Msg("GORM Logger created")
 		} else {
 			logger = nil
 		}
+
+		log.Trace().
+			Str("driver", "sqlite").
+			Msg("Creating GORM Instance")
 
 		db, err := gorm.Open(sqlite.Open(c.DbPath), &gorm.Config{
 			NowFunc:                                  time.Now().UTC,
@@ -55,6 +72,7 @@ func (c *container) GetDatabase() *gorm.DB {
 				Msg("error connecting to SQLite3 Database")
 		}
 
+		log.Debug().Msg("Migrating the database")
 		err = db.AutoMigrate(&models.User{}, &models.Message{})
 
 		if err != nil {
@@ -62,6 +80,8 @@ func (c *container) GetDatabase() *gorm.DB {
 				Err(err).
 				Msg("Failed to migrate DATABASE")
 		}
+
+		log.Debug().Msg("Database migrated")
 
 		c.db = db
 	}

@@ -2,7 +2,10 @@ package models
 
 type User struct {
 	Model
-	Username string `gorm:"uniqueIndex"`
+	Name     string
+	Surname  string
+	Email    string `gorm:"uniqueIndex"`
+	Password string
 
 	Messages []Message
 }

@@ -13,3 +13,8 @@ logging:
 
 chat:
   buffer: 10000
+
+password:
+  driver: bcrypt
+  bcrypt:
+    cost: 10

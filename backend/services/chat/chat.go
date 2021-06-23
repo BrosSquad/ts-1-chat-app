@@ -116,8 +116,10 @@ func (c *chatService) Connect(req *pb.ConnectRequest, client pb.Chat_ConnectServ
 	for _, message := range messages {
 		client.Send(&pb.MessageResponse{
 			User: &pb.User{
-				Id:       message.User.ID,
-				Username: message.User.Username,
+				Id:      message.User.ID,
+				Email:   message.User.Email,
+				Name:    message.User.Name,
+				Surname: message.User.Surname,
 			},
 			Text:      message.Text,
 			CreatedAt: message.CreatedAt.Format(time.RFC3339),
@@ -133,7 +135,9 @@ func (c *chatService) Connect(req *pb.ConnectRequest, client pb.Chat_ConnectServ
 					client.Send(&pb.MessageResponse{
 						User: &pb.User{
 							Id:       um.User.ID,
-							Username: um.User.Username,
+							Email:   um.User.Email,
+							Name:    um.User.Name,
+							Surname: um.User.Surname,
 						},
 						Text:      um.Message.Text,
 						CreatedAt: um.Message.CreatedAt.Format(time.RFC3339),
