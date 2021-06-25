@@ -13,7 +13,10 @@ build: clean
 	echo './server -db ./db/database.sqlite -logs ./logs -config . -file -console -level info' >> ./bin/start
 	chmod +x ./bin/start
 
-run:
+config.yml:
+	cp backend/config.example.yml ./config.yml
+
+run: config.yml
 	cd backend && go run cmd/server/main.go \
 		-logs ../logs \
 		-config .. \
@@ -23,7 +26,8 @@ run:
 
 .PHONY: protoc-go
 protoc-go:
-	protoc -I proto -I proto-3rd-party --go_out=$(PROTO_GENERATE_PATH) \
+	protoc -I proto -I proto-3rd-party \
+	 	--go_out=$(PROTO_GENERATE_PATH) \
 		--go-grpc_out=$(PROTO_GENERATE_PATH) \
 		--go-tag_out=paths=source_relative:$(PROTO_GENERATE_PATH) \
 		--go-grpc_opt=paths=source_relative \
