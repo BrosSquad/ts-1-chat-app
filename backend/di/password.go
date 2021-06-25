@@ -16,18 +16,34 @@ func (c *container) GetPasswordHasher() password.Hasher {
 
 		switch driver {
 		case "bcrypt":
-			cost := c.viper.GetInt("password.bcrypt.cost")
-
-			log.Trace().Str("driver", driver).
-				Int("cost", cost).
-				Msg("Creating BCrypt Driver")
-
-			c.passwordHasher = password.NewBCryptHasher(c.GetErrorLogger(), cost)
+			c.passwordHasher = c.getBcryptDriver()
+		case "argon":
+			c.passwordHasher = c.getArgon2Driver()
+			fallthrough
 		default:
-			log.Fatal().Str("driver", driver).Msg("Unknown Password Hashing driver")
+			log.Fatal().
+				Str("driver", driver).
+				Msg("Unknown Password Hashing driver")
 		}
 
 	}
 
 	return c.passwordHasher
+}
+
+
+func (c *container) getBcryptDriver() password.Hasher {
+
+	cost := c.viper.GetInt("password.bcrypt.cost")
+
+	log.Trace().Str("driver", "bcrypt").
+		Int("cost", cost).
+		Msg("Creating BCrypt Driver")
+
+	return password.NewBCryptHasher(c.GetErrorLogger(), cost)
+}
+
+
+func (c *container) getArgon2Driver() password.Hasher {
+	return nil
 }

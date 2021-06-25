@@ -3,6 +3,7 @@ package password
 // TODO: Optimize for Buffer allocations
 
 import (
+	"errors"
 	"github.com/BrosSquad/ts-1-chat-app/backend/logging"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -28,7 +29,17 @@ func (b bcryptHasher) Hash(password string) string {
 }
 
 func (b bcryptHasher) Verify(hash string, plaintext string) error {
-	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(plaintext))
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(plaintext))
+
+	if err != nil {
+		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
+			return ErrMismatchedHashAndPassword
+		}
+
+		return err
+	}
+
+	return nil
 }
 
 func NewBCryptHasher(errorLogger *logging.Error, cost int) Hasher {

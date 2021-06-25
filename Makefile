@@ -1,5 +1,11 @@
+PROTO_FILES ?= $(shell find proto -iname "*.proto")
+GOPATH ?= $(HOME)/go
+
+
+PROTO_GENERATE_PATH = backend/services/pb
+
 .PHONY: build
-build:
+build: clean
 	@cd backend/ && go build -o ../bin/server ./cmd/server/main.go
 	cp backend/config.example.yml ./bin/config.yml
 	mkdir ./bin/logs
@@ -17,12 +23,18 @@ run:
 
 .PHONY: protoc-go
 protoc-go:
-	protoc -I proto --go_out=backend/services/pb \
-		--go_opt=paths=source_relative \
-		--go-grpc_out=backend/services/pb \
-		--go-grpc_opt=paths=source_relative $(shell find proto -iname "*.proto")
+	protoc -I proto -I proto-3rd-party --go_out=$(PROTO_GENERATE_PATH) \
+		--go-grpc_out=$(PROTO_GENERATE_PATH) \
+		--go-tag_out=paths=source_relative:$(PROTO_GENERATE_PATH) \
+		--go-grpc_opt=paths=source_relative \
+		$(shell find proto -iname "*.proto")
+	rm -rf $(PROTO_GENERATE_PATH)/github.com
 
 .PHONY: protoc-dart
 protoc-dart:
-	protoc -I proto --dart_out=grpc:chat_app/lib/proto \
-		$(shell find proto -iname "*.proto")
+	protoc -I proto -I proto-3rd-party --dart_out=grpc:chat_app/lib/proto \
+		$(PROTO_FILES)
+
+.PHONY: clean
+clean:
+	rm -rf bin/

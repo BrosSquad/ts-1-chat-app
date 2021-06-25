@@ -1,10 +1,10 @@
 syntax = "proto3";
 
 // Can be project name or whateva
-package user;
+package pb;
 
 // Define where to generate output
-option go_package = "github.com/BrosSquad/ts-1-chat-app/backend/services/pb";
+option go_package = "github.com/BrosSquad/ts-1-chat-app/backend/services/pb;pb";
 
 message User {
     uint64 id = 1;

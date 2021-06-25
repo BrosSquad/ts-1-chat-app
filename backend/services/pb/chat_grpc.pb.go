@@ -32,7 +32,7 @@ func NewChatClient(cc grpc.ClientConnInterface) ChatClient {
 
 func (c *chatClient) SendMessage(ctx context.Context, in *MessageRequest, opts ...grpc.CallOption) (*Empty, error) {
 	out := new(Empty)
-	err := c.cc.Invoke(ctx, "/chat.Chat/SendMessage", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/pb.Chat/SendMessage", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +40,7 @@ func (c *chatClient) SendMessage(ctx context.Context, in *MessageRequest, opts .
 }
 
 func (c *chatClient) Connect(ctx context.Context, in *ConnectRequest, opts ...grpc.CallOption) (Chat_ConnectClient, error) {
-	stream, err := c.cc.NewStream(ctx, &Chat_ServiceDesc.Streams[0], "/chat.Chat/Connect", opts...)
+	stream, err := c.cc.NewStream(ctx, &Chat_ServiceDesc.Streams[0], "/pb.Chat/Connect", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +113,7 @@ func _Chat_SendMessage_Handler(srv interface{}, ctx context.Context, dec func(in
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/chat.Chat/SendMessage",
+		FullMethod: "/pb.Chat/SendMessage",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ChatServer).SendMessage(ctx, req.(*MessageRequest))
@@ -146,7 +146,7 @@ func (x *chatConnectServer) Send(m *MessageResponse) error {
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var Chat_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "chat.Chat",
+	ServiceName: "pb.Chat",
 	HandlerType: (*ChatServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

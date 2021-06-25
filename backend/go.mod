@@ -3,10 +3,11 @@ module github.com/BrosSquad/ts-1-chat-app/backend
 go 1.16
 
 require (
-	github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e // indirect
+	github.com/go-playground/validator v9.31.0+incompatible // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/mattn/go-sqlite3 v1.14.7 // indirect
 	github.com/rs/zerolog v1.23.0 // indirect
+	github.com/searKing/golang/tools/cmd/protoc-gen-go-tag v0.0.0-20210618061541-6f9001ab7f06 // indirect
 	github.com/spf13/viper v1.8.0 // indirect
 	golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e // indirect
 	golang.org/x/net v0.0.0-20210614182718-04defd469f4e // indirect
