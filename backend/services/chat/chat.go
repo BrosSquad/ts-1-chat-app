@@ -2,6 +2,7 @@ package chat
 
 import (
 	"context"
+	"github.com/BrosSquad/ts-1-chat-app/backend/validators"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -23,25 +24,39 @@ type UserMessage struct {
 type chatService struct {
 	debugLogger      *logging.Debug
 	errorLogger      *logging.Error
-	conns            sync.Map
-	numOfconnections uint64
+	validator        validators.Validator
+	connections      sync.Map
+	numOfConnections uint64
 	messages         chan UserMessage
 	db               *gorm.DB
 	pb.UnimplementedChatServer
 }
 
-func New(db *gorm.DB, debugLogger *logging.Debug, errorLogger *logging.Error, buffer uint16) pb.ChatServer {
+func New(db *gorm.DB, validator validators.Validator, debugLogger *logging.Debug, errorLogger *logging.Error, buffer uint16) pb.ChatServer {
 	return &chatService{
 		debugLogger:      debugLogger,
 		errorLogger:      errorLogger,
-		conns:            sync.Map{},
-		numOfconnections: 0,
+		validator:        validator,
+		connections:      sync.Map{},
+		numOfConnections: 0,
 		db:               db,
 		messages:         make(chan UserMessage, buffer),
 	}
 }
 
-func (c *chatService) SendMessage(ctx context.Context, in *pb.MessageRequest) (*pb.Empty, error) {
+func (c *chatService) SendMessage(ctx context.Context, in *pb.MessageRequest) (*pb.MessageResponse, error) {
+	validations, err := c.validator.Struct(in)
+
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid input")
+	}
+
+	if validations != nil {
+		return &pb.MessageResponse{
+			ValidationErrors: validations,
+		}, status.Error(codes.InvalidArgument, "invalid input")
+	}
+
 	message := models.Message{
 		UserID: in.GetUserId(),
 		Text:   in.GetText(),
@@ -60,6 +75,7 @@ func (c *chatService) SendMessage(ctx context.Context, in *pb.MessageRequest) (*
 			Str("message", message.Text).
 			Uint64("userId", message.UserID).
 			Msg("cannot insert message into database")
+
 		return nil, status.Error(codes.Internal, "cannot insert message")
 	}
 
@@ -83,17 +99,17 @@ func (c *chatService) SendMessage(ctx context.Context, in *pb.MessageRequest) (*
 		Message: message,
 	}
 
-	return &pb.Empty{}, nil
+	return &pb.MessageResponse{}, nil
 }
 
 func (c *chatService) Connect(req *pb.ConnectRequest, client pb.Chat_ConnectServer) error {
-	value := atomic.AddUint64(&c.numOfconnections, 1)
+	value := atomic.AddUint64(&c.numOfConnections, 1)
 	c.debugLogger.Debug().
 		Str("type", "connections").
 		Uint64("numberOfConnections", value).
 		Msg("Number of conccurrent connections")
 
-	c.conns.Store(req.UserId, client)
+	c.connections.Store(req.UserId, client)
 	messages := make([]models.Message, 0, 50)
 
 	result := c.db.WithContext(client.Context()).
@@ -114,7 +130,7 @@ func (c *chatService) Connect(req *pb.ConnectRequest, client pb.Chat_ConnectServ
 	}
 
 	for _, message := range messages {
-		client.Send(&pb.MessageResponse{
+		_ = client.Send(&pb.MessageResponse{
 			User: &pb.User{
 				Id:      message.User.ID,
 				Email:   message.User.Email,
@@ -130,11 +146,11 @@ func (c *chatService) Connect(req *pb.ConnectRequest, client pb.Chat_ConnectServ
 		select {
 		case um := <-c.messages:
 			go func(um UserMessage) {
-				c.conns.Range(func(key, value interface{}) bool {
+				c.connections.Range(func(key, value interface{}) bool {
 					client := value.(pb.Chat_ConnectServer)
-					client.Send(&pb.MessageResponse{
+					_ = client.Send(&pb.MessageResponse{
 						User: &pb.User{
-							Id:       um.User.ID,
+							Id:      um.User.ID,
 							Email:   um.User.Email,
 							Name:    um.User.Name,
 							Surname: um.User.Surname,
@@ -147,8 +163,8 @@ func (c *chatService) Connect(req *pb.ConnectRequest, client pb.Chat_ConnectServ
 				})
 			}(um)
 		case <-client.Context().Done():
-			value := atomic.AddUint64(&c.numOfconnections, ^uint64(0))
-			c.conns.Delete(req.UserId)
+			value := atomic.AddUint64(&c.numOfConnections, ^uint64(0))
+			c.connections.Delete(req.UserId)
 
 			c.debugLogger.Debug().
 				Str("type", "connections").

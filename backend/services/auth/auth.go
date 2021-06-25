@@ -3,7 +3,6 @@ package auth
 import (
 	"context"
 	"errors"
-
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
@@ -12,25 +11,41 @@ import (
 	"github.com/BrosSquad/ts-1-chat-app/backend/models"
 	"github.com/BrosSquad/ts-1-chat-app/backend/services/password"
 	"github.com/BrosSquad/ts-1-chat-app/backend/services/pb"
+	"github.com/BrosSquad/ts-1-chat-app/backend/validators"
 )
 
 type authService struct {
 	errorLogger    *logging.Error
 	db             *gorm.DB
 	passwordHasher password.Hasher
+	validator      validators.Validator
 
 	pb.UnimplementedAuthServer
 }
 
-func New(db *gorm.DB, errorLogger *logging.Error, hasher password.Hasher) pb.AuthServer {
+func New(db *gorm.DB, errorLogger *logging.Error, hasher password.Hasher, validator validators.Validator) pb.AuthServer {
 	return &authService{
 		errorLogger:    errorLogger,
 		db:             db,
 		passwordHasher: hasher,
+		validator:      validator,
 	}
 }
 
 func (a *authService) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.RegisterResponse, error) {
+	validations, err := a.validator.Struct(req)
+
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid input")
+	}
+
+	if validations != nil {
+		return &pb.RegisterResponse{
+			ValidationErrors: validations,
+			User:             nil,
+		}, status.Error(codes.InvalidArgument, "invalid input")
+	}
+
 	name := req.GetName()
 	surname := req.GetSurname()
 	email := req.GetEmail()
@@ -82,6 +97,18 @@ func (a *authService) Register(ctx context.Context, req *pb.RegisterRequest) (*p
 }
 
 func (a *authService) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
+	validations, err := a.validator.Struct(req)
+
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid input")
+	}
+
+	if validations != nil {
+		return &pb.LoginResponse{
+			ValidationErrors: validations,
+		}, status.Error(codes.InvalidArgument, "invalid input")
+	}
+
 	email, pass := req.GetEmail(), req.GetPassword()
 
 	var user models.User
@@ -105,7 +132,7 @@ func (a *authService) Login(ctx context.Context, req *pb.LoginRequest) (*pb.Logi
 		return nil, status.Error(codes.Internal, "cannot fetch user")
 	}
 
-	err := a.passwordHasher.Verify(user.Password, pass)
+	err = a.passwordHasher.Verify(user.Password, pass)
 
 	if err != nil {
 		if errors.Is(err, password.ErrMismatchedHashAndPassword) {
@@ -124,12 +151,13 @@ func (a *authService) Login(ctx context.Context, req *pb.LoginRequest) (*pb.Logi
 	// TODO: Generate Token
 
 	return &pb.LoginResponse{
-		User:  &pb.User{
+		User: & pb.User{
 			Id:      user.ID,
 			Name:    user.Name,
 			Surname: user.Surname,
 			Email:   user.Email,
 		},
-		Token: "",
+		Token:            "",
+		ValidationErrors: nil,
 	}, nil
 }
