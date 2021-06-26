@@ -33,17 +33,10 @@ func New(db *gorm.DB, errorLogger *logging.Error, hasher password.Hasher, valida
 }
 
 func (a *authService) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.RegisterResponse, error) {
-	validations, err := a.validator.Struct(req)
+	err := a.validator.Struct(req)
 
 	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid input")
-	}
-
-	if validations != nil {
-		return &pb.RegisterResponse{
-			ValidationErrors: validations,
-			User:             nil,
-		}, status.Error(codes.InvalidArgument, "invalid input")
+		return nil, err
 	}
 
 	name := req.GetName()
@@ -57,33 +50,35 @@ func (a *authService) Register(ctx context.Context, req *pb.RegisterRequest) (*p
 
 	result := tx.Where("email = ?", email).First(&user)
 
+	if result.Error != nil && !errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		a.errorLogger.
+			Err(result.Error).
+			Str("type", "database").
+			Str("query", result.Statement.SQL.String()).
+			Msg("error while reading the database")
+
+		return nil, status.Error(codes.Internal, "cannot create user")
+	}
+
+	if result.RowsAffected != 0 {
+		return nil, status.Error(codes.AlreadyExists, "user already exists")
+	}
+
+	user.Email = email
+	user.Name = name
+	user.Surname = surname
+	user.Password = a.passwordHasher.Hash(pass)
+
+	result = tx.Create(&user)
+
 	if result.Error != nil {
-		if !errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			a.errorLogger.
-				Err(result.Error).
-				Str("type", "database").
-				Str("query", result.Statement.SQL.String()).
-				Msg("error while reading the database")
+		a.errorLogger.
+			Err(result.Error).
+			Str("type", "database").
+			Str("query", result.Statement.SQL.String()).
+			Msg("cannot create new user")
 
-			return nil, status.Error(codes.Internal, "cannot insert user")
-		}
-
-		user.Email = email
-		user.Name = name
-		user.Surname = surname
-		user.Password = a.passwordHasher.Hash(pass)
-
-		result = tx.Create(&user)
-
-		if result.Error != nil {
-			a.errorLogger.
-				Err(result.Error).
-				Str("type", "database").
-				Str("query", result.Statement.SQL.String()).
-				Msg("cannot create new user")
-
-			return nil, status.Error(codes.Internal, "cannot insert user")
-		}
+		return nil, status.Error(codes.Internal, "cannot insert user")
 	}
 
 	return &pb.RegisterResponse{
@@ -97,16 +92,10 @@ func (a *authService) Register(ctx context.Context, req *pb.RegisterRequest) (*p
 }
 
 func (a *authService) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
-	validations, err := a.validator.Struct(req)
+	err := a.validator.Struct(req)
 
 	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid input")
-	}
-
-	if validations != nil {
-		return &pb.LoginResponse{
-			ValidationErrors: validations,
-		}, status.Error(codes.InvalidArgument, "invalid input")
+		return nil, err
 	}
 
 	email, pass := req.GetEmail(), req.GetPassword()
@@ -151,7 +140,7 @@ func (a *authService) Login(ctx context.Context, req *pb.LoginRequest) (*pb.Logi
 	// TODO: Generate Token
 
 	return &pb.LoginResponse{
-		User: & pb.User{
+		User: &pb.User{
 			Id:      user.ID,
 			Name:    user.Name,
 			Surname: user.Surname,

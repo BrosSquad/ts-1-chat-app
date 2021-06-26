@@ -1,7 +1,10 @@
 syntax = "proto3";
 
+import "common.proto";
+
 import "user.proto";
 import "tag/tag.proto";
+
 
 // Can be project name or whateva
 package pb;
@@ -11,31 +14,31 @@ option go_package = "github.com/BrosSquad/ts-1-chat-app/backend/services/pb;pb";
 
 
 message RegisterRequest {
-  string email = 1 [(google.protobuf.field_tag) = {struct_tag: "validate:\"required,email,max:200\" conform:\"trim,!html,!js\""} ];
-  string password = 2 [(google.protobuf.field_tag) =  {struct_tag:"validate:\"required,min:8,max:64\" conform:\"trim,!html,!js\""} ];
-  string name = 3 [(google.protobuf.field_tag) =  {struct_tag:"validate:\"required,min:2,max:100\" conform:\"trim,!html,!js\"" }];
-  string surname = 4 [(google.protobuf.field_tag) =  {struct_tag:"validate:\"required,min:2,max:100\" conform:\"trim,!html,!js\""} ];
+  string email = 1 [(google.protobuf.field_tag) = {struct_tag: "validate:\"required,email,max=200\" conform:\"trim,!html,!js\""}];
+  string password = 2 [(google.protobuf.field_tag) = {struct_tag:"validate:\"required,min=8,max=64\" conform:\"trim,!html,!js\""}];
+  string name = 3 [(google.protobuf.field_tag) = {struct_tag:"validate:\"required,min=2,max=100\" conform:\"trim,!html,!js\""}];
+  string surname = 4 [(google.protobuf.field_tag) = {struct_tag:"validate:\"required,min=2,max=100\" conform:\"trim,!html,!js\""}];
 }
 
 message RegisterResponse {
   User user = 1;
-  map<string,string> validation_errors = 2;
+  map<string, string> validation_errors = 2;
 }
 
 message LoginRequest {
-  string email = 1 [(google.protobuf.field_tag) =  {struct_tag:"validate:\"required,email,max:200\" conform:\"trim,!html,!js\""} ];
-  string password = 2 [(google.protobuf.field_tag) =  {struct_tag:"validate:\"required,min:8,max:64\" conform:\"trim,!html,!js\""} ];
+  string email = 1 [(google.protobuf.field_tag) = {struct_tag:"validate:\"required,email,max=200\" conform:\"trim,!html,!js\""}];
+  string password = 2 [(google.protobuf.field_tag) = {struct_tag:"validate:\"required,min=8,max=64\" conform:\"trim,!html,!js\""}];
 }
 
 message LoginResponse {
   User user = 1;
   string token = 2;
 
-  map<string,string> validation_errors = 3;
+  map<string, string> validation_errors = 3;
 }
 
 
 service Auth {
-    rpc Register(RegisterRequest) returns (RegisterResponse);
-    rpc Login(LoginRequest) returns (LoginResponse);
+  rpc Register(RegisterRequest) returns (RegisterResponse);
+  rpc Login(LoginRequest) returns (LoginResponse);
 }

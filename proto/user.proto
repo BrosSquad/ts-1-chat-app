@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+import "common.proto";
+
 // Can be project name or whateva
 package pb;
 
@@ -7,8 +9,8 @@ package pb;
 option go_package = "github.com/BrosSquad/ts-1-chat-app/backend/services/pb;pb";
 
 message User {
-    uint64 id = 1;
-    string name = 2;
-    string surname = 3;
-    string email = 4;
+  uint64 id = 1;
+  string name = 2;
+  string surname = 3;
+  string email = 4;
 }

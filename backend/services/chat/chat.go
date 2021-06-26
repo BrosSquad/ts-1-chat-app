@@ -2,7 +2,6 @@ package chat
 
 import (
 	"context"
-	"github.com/BrosSquad/ts-1-chat-app/backend/validators"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -14,6 +13,7 @@ import (
 	"github.com/BrosSquad/ts-1-chat-app/backend/logging"
 	"github.com/BrosSquad/ts-1-chat-app/backend/models"
 	"github.com/BrosSquad/ts-1-chat-app/backend/services/pb"
+	"github.com/BrosSquad/ts-1-chat-app/backend/validators"
 )
 
 type UserMessage struct {
@@ -45,16 +45,10 @@ func New(db *gorm.DB, validator validators.Validator, debugLogger *logging.Debug
 }
 
 func (c *chatService) SendMessage(ctx context.Context, in *pb.MessageRequest) (*pb.MessageResponse, error) {
-	validations, err := c.validator.Struct(in)
+	err := c.validator.Struct(in)
 
 	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid input")
-	}
-
-	if validations != nil {
-		return &pb.MessageResponse{
-			ValidationErrors: validations,
-		}, status.Error(codes.InvalidArgument, "invalid input")
+		return nil, err
 	}
 
 	message := models.Message{
@@ -107,7 +101,7 @@ func (c *chatService) Connect(req *pb.ConnectRequest, client pb.Chat_ConnectServ
 	c.debugLogger.Debug().
 		Str("type", "connections").
 		Uint64("numberOfConnections", value).
-		Msg("Number of conccurrent connections")
+		Msg("Number of concurrent connections")
 
 	c.connections.Store(req.UserId, client)
 	messages := make([]models.Message, 0, 50)

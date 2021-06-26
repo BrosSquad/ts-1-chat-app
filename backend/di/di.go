@@ -1,6 +1,7 @@
 package di
 
 import (
+	"github.com/BrosSquad/ts-1-chat-app/backend/services/auth"
 	"github.com/BrosSquad/ts-1-chat-app/backend/validators"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
@@ -25,22 +26,27 @@ type (
 
 		GetPasswordHasher() password.Hasher
 		GetValidator() validators.Validator
+		GetTokenService() auth.TokenService
 
 		GetChatBuffer() uint16
 	}
 
 	container struct {
-	viper *viper.Viper
-	Config
+		viper *viper.Viper
+		Config
 
-	db          *gorm.DB
-	errorLogger *logging.Error
-	debugLogger *logging.Debug
-	infoLogger  *logging.Info
+		db          *gorm.DB
+		errorLogger *logging.Error
+		debugLogger *logging.Debug
+		infoLogger  *logging.Info
 
-	passwordHasher password.Hasher
-	validator      validators.Validator
-}
+		// Services
+		passwordHasher password.Hasher
+		validator      validators.Validator
+		tokenService   auth.TokenService
+
+		// Repositories
+	}
 )
 
 func (c *container) GetChatBuffer() uint16 {

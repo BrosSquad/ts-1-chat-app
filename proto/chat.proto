@@ -1,7 +1,10 @@
 syntax = "proto3";
 
+import "common.proto";
+
 import "user.proto";
 import "tag/tag.proto";
+
 
 // Can be project name or whateva
 package pb;
@@ -19,7 +22,7 @@ message MessageResponse {
   string text = 2;
   string created_at = 3;
 
-  map<string,string> validation_errors = 4;
+  map<string, string> validation_errors = 4;
 }
 
 message ConnectRequest {

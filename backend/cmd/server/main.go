@@ -13,13 +13,14 @@ import (
 
 	"github.com/BrosSquad/ts-1-chat-app/backend/di"
 	"github.com/BrosSquad/ts-1-chat-app/backend/logging"
+	"github.com/BrosSquad/ts-1-chat-app/backend/middleware"
 	"github.com/BrosSquad/ts-1-chat-app/backend/services"
 	"github.com/BrosSquad/ts-1-chat-app/backend/utils"
 )
 
 var (
-	Version string = "dev"
-	Author  string = "BrosSquad Dev Team"
+	Version = "dev"
+	Author  = "BrosSquad Dev Team"
 
 	configPath string
 	logsPath   string
@@ -30,19 +31,6 @@ var (
 	logToFile    bool
 	logToConsole bool
 )
-
-func init() {
-	flag.StringVar(&configPath, "config", ".", "Path to the configuration directory")
-	flag.StringVar(&logsPath, "logs", "./logs", "Path to the root logs directory")
-	flag.StringVar(&logLevel, "level", "trace", "Console loggger default logging level")
-	flag.StringVar(&addr, "addr", "", "Address of the HTTP2 gRPC Server")
-
-	flag.BoolVar(&logJson, "json", false, "Log global logs as json")
-	flag.BoolVar(&logToFile, "file", false, "Log global logs output to file")
-	flag.BoolVar(&logToConsole, "console", true, "All logs output to file and console")
-
-	flag.Parse()
-}
 
 func getServerAddr(flag string) string {
 	if flag != "" {
@@ -59,6 +47,17 @@ func getServerAddr(flag string) string {
 }
 
 func main() {
+	flag.StringVar(&configPath, "config", ".", "Path to the configuration directory")
+	flag.StringVar(&logsPath, "logs", "./logs", "Path to the root logs directory")
+	flag.StringVar(&logLevel, "level", "trace", "Console logger default logging level")
+	flag.StringVar(&addr, "addr", "", "Address of the HTTP2 gRPC Server")
+
+	flag.BoolVar(&logJson, "json", false, "Log global logs as json")
+	flag.BoolVar(&logToFile, "file", false, "Log global logs output to file")
+	flag.BoolVar(&logToConsole, "console", true, "All logs output to file and console")
+
+	flag.Parse()
+
 	var err error
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -67,13 +66,13 @@ func main() {
 	signal.Notify(exit, os.Interrupt)
 
 	if logToFile {
-		path := path.Join(logsPath, "global.jsonl")
-		output, err := utils.CreateLogFile(path, 0744)
+		p := path.Join(logsPath, "global.jsonl")
+		output, err := utils.CreateLogFile(p, 0744)
 
 		if err != nil {
 			log.Fatal().
 				Err(err).
-				Msgf("Cannot open %s file for logging", path)
+				Msgf("Cannot open %s file for logging", p)
 		}
 
 		defer output.Close()
@@ -82,7 +81,6 @@ func main() {
 	} else {
 		logging.ConfigureDefaultLogger(ctx, logLevel, nil, logToConsole, logJson)
 	}
-
 
 	log.Trace().Str("logsPath", logsPath).Msg("Path to Logs")
 
@@ -116,7 +114,9 @@ func main() {
 		Str("addr", addr).
 		Msg("Starting the server")
 
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(
+		middleware.Register()...,
+	)
 
 	services.Register(grpcServer, container)
 
