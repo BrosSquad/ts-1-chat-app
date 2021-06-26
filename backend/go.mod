@@ -3,6 +3,7 @@ module github.com/BrosSquad/ts-1-chat-app/backend
 go 1.16
 
 require (
+	github.com/fatih/color v1.12.0 // indirect
 	github.com/go-playground/locales v0.13.0 // indirect
 	github.com/go-playground/universal-translator v0.17.0
 	github.com/go-playground/validator v9.31.0+incompatible

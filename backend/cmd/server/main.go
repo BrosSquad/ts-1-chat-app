@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"path"
 
+	"github.com/fatih/color"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 
@@ -58,6 +59,9 @@ func main() {
 
 	flag.Parse()
 
+	color.Blue("Author: %s\t", Author)
+	color.Green("Version: %s", Version)
+
 	var err error
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -67,7 +71,7 @@ func main() {
 
 	if logToFile {
 		p := path.Join(logsPath, "global.jsonl")
-		output, err := utils.CreateLogFile(p, 0744)
+		output, err := utils.CreateLogFile(p, 0644)
 
 		if err != nil {
 			log.Fatal().

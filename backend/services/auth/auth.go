@@ -15,20 +15,22 @@ import (
 )
 
 type authService struct {
-	errorLogger    *logging.Error
-	db             *gorm.DB
-	passwordHasher password.Hasher
-	validator      validators.Validator
+	registerService RegisterService
+	errorLogger     *logging.Error
+	db              *gorm.DB
+	passwordHasher  password.Hasher
+	validator       validators.Validator
 
 	pb.UnimplementedAuthServer
 }
 
-func New(db *gorm.DB, errorLogger *logging.Error, hasher password.Hasher, validator validators.Validator) pb.AuthServer {
+func New(registerService RegisterService, db *gorm.DB, errorLogger *logging.Error, hasher password.Hasher, validator validators.Validator) pb.AuthServer {
 	return &authService{
-		errorLogger:    errorLogger,
-		db:             db,
-		passwordHasher: hasher,
-		validator:      validator,
+		registerService: registerService,
+		errorLogger:     errorLogger,
+		db:              db,
+		passwordHasher:  hasher,
+		validator:       validator,
 	}
 }
 
@@ -39,54 +41,18 @@ func (a *authService) Register(ctx context.Context, req *pb.RegisterRequest) (*p
 		return nil, err
 	}
 
-	name := req.GetName()
-	surname := req.GetSurname()
-	email := req.GetEmail()
-	pass := req.GetPassword()
+	user, err := a.registerService.Register(ctx, req)
 
-	var user models.User
-
-	tx := a.db.WithContext(ctx)
-
-	result := tx.Where("email = ?", email).First(&user)
-
-	if result.Error != nil && !errors.Is(result.Error, gorm.ErrRecordNotFound) {
-		a.errorLogger.
-			Err(result.Error).
-			Str("type", "database").
-			Str("query", result.Statement.SQL.String()).
-			Msg("error while reading the database")
-
-		return nil, status.Error(codes.Internal, "cannot create user")
-	}
-
-	if result.RowsAffected != 0 {
-		return nil, status.Error(codes.AlreadyExists, "user already exists")
-	}
-
-	user.Email = email
-	user.Name = name
-	user.Surname = surname
-	user.Password = a.passwordHasher.Hash(pass)
-
-	result = tx.Create(&user)
-
-	if result.Error != nil {
-		a.errorLogger.
-			Err(result.Error).
-			Str("type", "database").
-			Str("query", result.Statement.SQL.String()).
-			Msg("cannot create new user")
-
-		return nil, status.Error(codes.Internal, "cannot insert user")
+	if err != nil {
+		return nil, err
 	}
 
 	return &pb.RegisterResponse{
 		User: &pb.User{
 			Id:      user.ID,
 			Email:   user.Email,
-			Name:    name,
-			Surname: surname,
+			Name:    user.Name,
+			Surname: user.Surname,
 		},
 	}, nil
 }
@@ -124,14 +90,12 @@ func (a *authService) Login(ctx context.Context, req *pb.LoginRequest) (*pb.Logi
 	err = a.passwordHasher.Verify(user.Password, pass)
 
 	if err != nil {
-		if errors.Is(err, password.ErrMismatchedHashAndPassword) {
+		if !errors.Is(err, password.ErrMismatchedHashAndPassword) {
 			a.errorLogger.
 				Err(err).
 				Str("type", "password").
 				Str("email", email).
 				Msg("error while verifiein password")
-
-			return nil, status.Error(codes.Internal, "password error")
 		}
 
 		return nil, status.Error(codes.Unauthenticated, "mismatched credentials")

@@ -1,6 +1,8 @@
 package di
 
 import (
+	"github.com/BrosSquad/ts-1-chat-app/backend/repositories/token"
+	"github.com/BrosSquad/ts-1-chat-app/backend/repositories/user"
 	"github.com/BrosSquad/ts-1-chat-app/backend/services/auth"
 	"github.com/BrosSquad/ts-1-chat-app/backend/validators"
 	"github.com/rs/zerolog/log"
@@ -27,6 +29,7 @@ type (
 		GetPasswordHasher() password.Hasher
 		GetValidator() validators.Validator
 		GetTokenService() auth.TokenService
+		GetRegisterService() auth.RegisterService
 
 		GetChatBuffer() uint16
 	}
@@ -41,11 +44,15 @@ type (
 		infoLogger  *logging.Info
 
 		// Services
-		passwordHasher password.Hasher
-		validator      validators.Validator
-		tokenService   auth.TokenService
+		passwordHasher  password.Hasher
+		validator       validators.Validator
+		tokenService    auth.TokenService
+		registerService auth.RegisterService
+		loginService    auth.LoginService
 
 		// Repositories
+		userRepository  user.Repository
+		tokenRepository token.Repository
 	}
 )
 

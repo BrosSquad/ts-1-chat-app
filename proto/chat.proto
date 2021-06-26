@@ -3,7 +3,6 @@ syntax = "proto3";
 import "common.proto";
 
 import "user.proto";
-import "tag/tag.proto";
 
 
 // Can be project name or whateva

@@ -1,6 +1,9 @@
 package auth
 
-import "github.com/BrosSquad/ts-1-chat-app/backend/models"
+import (
+	"github.com/BrosSquad/ts-1-chat-app/backend/models"
+	"github.com/BrosSquad/ts-1-chat-app/backend/repositories/token"
+)
 
 type (
 	TokenService interface {
@@ -8,7 +11,9 @@ type (
 		Verify(string) error
 	}
 
-	tokenService struct{}
+	tokenService struct {
+		repo token.Repository
+	}
 )
 
 func (t tokenService) Generate() models.Token {
@@ -19,6 +24,8 @@ func (t tokenService) Verify(token string) error {
 	return nil
 }
 
-func NewTokenService() TokenService {
-	return &tokenService{}
+func NewTokenService(repo token.Repository) TokenService {
+	return &tokenService{
+		repo: repo,
+	}
 }

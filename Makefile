@@ -1,6 +1,6 @@
 PROTO_FILES ?= $(shell find proto -iname "*.proto")
 GOPATH ?= $(HOME)/go
-
+LOG_LEVEL ?= trace
 PROTO_GENERATE_PATH = backend/services/pb
 
 .PHONY: build
@@ -19,7 +19,7 @@ run: config.yml
 	@cd backend && go run cmd/server/main.go \
 		-logs ../logs \
 		-config .. \
-		-level trace \
+		-level $(LOG_LEVEL) \
 		-file \
 		-console
 

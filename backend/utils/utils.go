@@ -44,21 +44,26 @@ func CreateLogFile(path string, perm fs.FileMode) (file *os.File, err error) {
 		return nil, err
 	}
 
-	file, err = os.Create(path)
+	if _, err = os.Stat(path); err != nil {
+		if os.IsNotExist(err) {
+			file, err = os.Create(path)
 
-	if err != nil {
-		return nil, err
+			if err != nil {
+				return nil, err
+			}
+
+			if err := file.Chmod(perm); err != nil {
+				return nil, err
+			}
+
+			if err := file.Close(); err != nil {
+				return nil, err
+			}
+
+		}
 	}
 
-	if err := file.Chmod(perm); err != nil {
-		return nil, err
-	}
-
-	if err := file.Close(); err != nil {
-		return nil, err
-	}
-
-	file, err = os.OpenFile(path, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+	file, err = os.OpenFile(path, os.O_WRONLY|os.O_APPEND, os.ModeAppend)
 
 	return
 }

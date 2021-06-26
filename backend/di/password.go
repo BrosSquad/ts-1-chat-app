@@ -31,7 +31,6 @@ func (c *container) GetPasswordHasher() password.Hasher {
 	return c.passwordHasher
 }
 
-
 func (c *container) getBcryptDriver() password.Hasher {
 
 	cost := c.viper.GetInt("password.bcrypt.cost")
@@ -42,7 +41,6 @@ func (c *container) getBcryptDriver() password.Hasher {
 
 	return password.NewBCryptHasher(c.GetErrorLogger(), cost)
 }
-
 
 func (c *container) getArgon2Driver() password.Hasher {
 	return nil
