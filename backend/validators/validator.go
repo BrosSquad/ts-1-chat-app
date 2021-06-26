@@ -7,7 +7,11 @@ import (
 )
 
 type (
-	Validator struct {
+	Validator interface {
+		Struct(data interface{}) (err error)
+	}
+
+	val struct {
 		Validator  *validator.Validate
 		Translator ut.Translator
 	}
@@ -26,7 +30,7 @@ func (v ValidationError) Error() string {
 	return "Validation errors"
 }
 
-func (v *Validator) Struct(data interface{}) (err error) {
+func (v *val) Struct(data interface{}) (err error) {
 	err = conform.Strings(data)
 
 	if err != nil {
@@ -55,6 +59,13 @@ func (v *Validator) Struct(data interface{}) (err error) {
 	}
 
 	return
+}
+
+func New(v *validator.Validate, trans ut.Translator) Validator {
+	return &val{
+		Validator:  v,
+		Translator: trans,
+	}
 }
 
 func Register(v *validator.Validate, trans ut.Translator) error {

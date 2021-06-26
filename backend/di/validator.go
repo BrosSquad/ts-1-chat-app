@@ -13,7 +13,7 @@ import (
 )
 
 func (c *container) GetValidator() validators.Validator {
-	if c.validator == (validators.Validator{}) {
+	if c.validator == nil {
 		locale := c.viper.GetString("locale")
 
 		log.Trace().Str("locale", locale).Msg("Validation messages locale")
@@ -31,10 +31,7 @@ func (c *container) GetValidator() validators.Validator {
 			log.Fatal().Err(err).Msg("Error while registering custom validators")
 		}
 
-		c.validator = validators.Validator{
-			Validator:  v,
-			Translator: translator,
-		}
+		c.validator = validators.New(v, translator)
 
 		log.Trace().Msg("Validator created")
 	}
