@@ -29,7 +29,9 @@ type (
 		GetPasswordHasher() password.Hasher
 		GetValidator() validators.Validator
 		GetTokenService() auth.TokenService
+
 		GetRegisterService() auth.RegisterService
+		GetLoginService() auth.LoginService
 
 		GetChatBuffer() uint16
 	}

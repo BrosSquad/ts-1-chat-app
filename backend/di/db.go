@@ -71,7 +71,7 @@ func (c *container) GetDatabase() *gorm.DB {
 		}
 
 		log.Debug().Msg("Migrating the database")
-		err = db.AutoMigrate(&models.User{}, &models.Message{})
+		err = db.AutoMigrate(models.GetModels()...)
 
 		if err != nil {
 			log.Fatal().

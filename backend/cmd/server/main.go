@@ -119,7 +119,7 @@ func main() {
 		Msg("Starting the server")
 
 	grpcServer := grpc.NewServer(
-		middleware.Register()...,
+		middleware.Register(container)...,
 	)
 
 	services.Register(grpcServer, container)

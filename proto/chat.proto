@@ -12,8 +12,8 @@ package pb;
 option go_package = "github.com/BrosSquad/ts-1-chat-app/backend/services/pb;pb";
 
 message MessageRequest {
-  uint64 user_id = 1  [(google.protobuf.field_tag) = {struct_tag:"validate:\"required,gt:0\""}];
-  string text = 2 [(google.protobuf.field_tag) = {struct_tag:"validate:\"required,alphanumericunicodespace,max:1000\" conform:\"trim,!html,!js\""}];
+  uint64 user_id = 1  [(google.protobuf.field_tag) = {struct_tag:"validate:\"required,gt=0\""}];
+  string text = 2 [(google.protobuf.field_tag) = {struct_tag:"validate:\"required,alphanumericunicodespace,max=1000\" conform:\"trim,!html,!js\""}];
 }
 
 message MessageResponse {

@@ -3,6 +3,8 @@ package middleware
 import (
 	"context"
 	"errors"
+	"github.com/BrosSquad/ts-1-chat-app/backend/logging"
+	"github.com/BrosSquad/ts-1-chat-app/backend/services/password"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -59,8 +61,22 @@ func handleRepositoryErrors(err error) error {
 	return nil
 }
 
+func handleAuthErrors(err error) error {
+	if errors.Is(err, password.ErrMismatchedHashAndPassword) {
+		return status.Error(codes.Unauthenticated, "authentication error")
+	}
+
+	return nil
+}
+
 func handleError(err error) error {
 	handled := handleRepositoryErrors(err)
+
+	if handled != nil {
+		return handled
+	}
+
+	handled = handleAuthErrors(err)
 
 	if handled != nil {
 		return handled
@@ -73,11 +89,15 @@ func handleError(err error) error {
 	return status.Error(codes.Internal, "internal error")
 }
 
-func UnaryErrorHandler() grpc.UnaryServerInterceptor {
+func UnaryErrorHandler(errorLogger *logging.Error) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 		res, err := handler(ctx, req)
 
 		if err != nil {
+			errorLogger.Err(err).
+				Interface("request", req).
+				Str("method", info.FullMethod).
+				Msg("Something went wrong")
 			return nil, handleError(err)
 		}
 

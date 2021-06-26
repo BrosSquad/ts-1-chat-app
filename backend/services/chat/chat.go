@@ -93,7 +93,16 @@ func (c *chatService) SendMessage(ctx context.Context, in *pb.MessageRequest) (*
 		Message: message,
 	}
 
-	return &pb.MessageResponse{}, nil
+	return &pb.MessageResponse{
+		User: &pb.User{
+			Id:      user.ID,
+			Name:    user.Name,
+			Surname: user.Surname,
+			Email:   user.Email,
+		},
+		Text:      message.Text,
+		CreatedAt: message.CreatedAt.Format(time.RFC3339),
+	}, nil
 }
 
 func (c *chatService) Connect(req *pb.ConnectRequest, client pb.Chat_ConnectServer) error {

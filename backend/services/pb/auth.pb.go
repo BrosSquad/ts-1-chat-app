@@ -152,7 +152,7 @@ type LoginRequest struct {
 	unknownFields protoimpl.UnknownFields
 
 	Email    string `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty" validate:"required,email,max=200" conform:"trim,!html,!js"`
-	Password string `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty" conform:"trim,!html,!js" validate:"required,min=8,max=64"`
+	Password string `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty" validate:"required,min=8,max=64" conform:"trim,!html,!js"`
 }
 
 func (x *LoginRequest) Reset() {

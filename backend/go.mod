@@ -24,4 +24,5 @@ require (
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gorm.io/driver/sqlite v1.1.4
 	gorm.io/gorm v1.21.11
+	lukechampine.com/blake3 v1.1.5 // indirect
 )

@@ -1,10 +1,14 @@
 package di
 
-import "github.com/BrosSquad/ts-1-chat-app/backend/services/auth"
+import (
+	"lukechampine.com/blake3"
+
+	"github.com/BrosSquad/ts-1-chat-app/backend/services/auth"
+)
 
 func (c *container) GetTokenService() auth.TokenService {
 	if c.tokenService == nil {
-		c.tokenService = auth.NewTokenService(c.GetTokenRepository())
+		c.tokenService = auth.NewTokenService(c.GetTokenRepository(), blake3.New(64, nil))
 	}
 
 	return c.tokenService
@@ -20,7 +24,12 @@ func (c *container) GetRegisterService() auth.RegisterService {
 
 func (c *container) GetLoginService() auth.LoginService {
 	if c.loginService == nil {
-		c.loginService = auth.NewLoginService(c.GetUserRepository(), c.GetTokenService(), c.GetPasswordHasher())
+		c.loginService = auth.NewLoginService(
+			c.GetUserRepository(),
+			c.GetTokenService(),
+			c.GetPasswordHasher(),
+			c.GetErrorLogger(),
+		)
 	}
 
 	return c.loginService
