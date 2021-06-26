@@ -110,7 +110,6 @@ func (a *authService) Login(ctx context.Context, req *pb.LoginRequest) (*pb.Logi
 			Surname: user.Surname,
 			Email:   user.Email,
 		},
-		Token:            "",
-		ValidationErrors: nil,
+		Token: "",
 	}, nil
 }
