@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"github.com/BrosSquad/ts-1-chat-app/backend/handlers"
 	"net"
 	"os"
 	"os/signal"
@@ -15,7 +16,6 @@ import (
 	"github.com/BrosSquad/ts-1-chat-app/backend/di"
 	"github.com/BrosSquad/ts-1-chat-app/backend/logging"
 	"github.com/BrosSquad/ts-1-chat-app/backend/middleware"
-	"github.com/BrosSquad/ts-1-chat-app/backend/services"
 	"github.com/BrosSquad/ts-1-chat-app/backend/utils"
 )
 
@@ -122,7 +122,7 @@ func main() {
 		middleware.Register(container)...,
 	)
 
-	services.Register(grpcServer, container)
+	handlers.Register(grpcServer, container)
 
 	go func() {
 		err = grpcServer.Serve(listener)
