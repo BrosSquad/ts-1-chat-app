@@ -17,7 +17,6 @@ func (c *chatService) Connect(req *pb.ConnectRequest, client pb.Chat_ConnectServ
 		Str("type", "connections").
 		Uint64("numberOfConnections", value).
 		Msg("Number of concurrent connections")
-
 	c.connections.Store(req.UserId, client)
 	messages := make([]models.Message, 0, 50)
 

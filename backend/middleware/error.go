@@ -86,7 +86,7 @@ func handleError(err error) error {
 		return handleValidationError(validations)
 	}
 
-	return status.Error(codes.Internal, "internal error")
+	return err
 }
 
 func UnaryErrorHandler(errorLogger *logging.Error) grpc.UnaryServerInterceptor {

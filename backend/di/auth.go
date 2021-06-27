@@ -34,3 +34,11 @@ func (c *container) GetLoginService() auth.LoginService {
 
 	return c.loginService
 }
+
+func (c *container) GetLogoutService() auth.LogoutService {
+	if c.logoutService == nil {
+		c.logoutService = auth.NewLogoutService(c.GetTokenService())
+	}
+
+	return c.logoutService
+}

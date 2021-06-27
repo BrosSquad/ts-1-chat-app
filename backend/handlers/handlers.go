@@ -16,7 +16,24 @@ func Register(server grpc.ServiceRegistrar, container di.Container) {
 
 	validator := container.GetValidator()
 
-	pb.RegisterChatServer(server, chat.New(db, validator, debugLogger, errorLogger, container.GetChatBuffer()))
+	pb.RegisterChatServer(
+		server,
+		chat.New(
+			db,
+			validator,
+			debugLogger,
+			errorLogger,
+			container.GetChatBuffer(),
+		),
+	)
 
-	pb.RegisterAuthServer(server, auth.New(container.GetRegisterService(), container.GetLoginService(), validator))
+	pb.RegisterAuthServer(
+		server,
+		auth.New(
+			container.GetRegisterService(),
+			container.GetLogoutService(),
+			container.GetLoginService(),
+			validator,
+		),
+	)
 }

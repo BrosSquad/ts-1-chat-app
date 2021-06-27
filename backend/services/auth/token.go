@@ -7,12 +7,14 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"github.com/BrosSquad/ts-1-chat-app/backend/utils"
 	"hash"
 	"strings"
 
+	"google.golang.org/grpc/metadata"
+
 	"github.com/BrosSquad/ts-1-chat-app/backend/models"
 	"github.com/BrosSquad/ts-1-chat-app/backend/repositories/token"
+	"github.com/BrosSquad/ts-1-chat-app/backend/utils"
 )
 
 const (
@@ -23,7 +25,8 @@ const (
 type (
 	TokenService interface {
 		Generate(context.Context, models.User) (string, error)
-		Verify(context.Context, string) error
+		Verify(context.Context, string, string) error
+		Delete(context.Context, string) error
 	}
 
 	tokenService struct {
@@ -64,11 +67,21 @@ func (t tokenService) Generate(ctx context.Context, user models.User) (string, e
 	), nil
 }
 
-func (t tokenService) Verify(ctx context.Context, token string) error {
-	keyAndValue := strings.SplitN(token, ".", 1)
+func (t tokenService) Delete(ctx context.Context, token string) error {
+	id, _, err := t.parse(token)
+
+	if err != nil {
+		return err
+	}
+
+	return t.repo.Delete(ctx, id[:])
+}
+
+func (t tokenService) parse(token string) ([IdSize]byte, [ValueSize]byte, error) {
+	keyAndValue := strings.SplitN(token, ".", 2)
 
 	if len(keyAndValue) != 2 {
-		return errors.New("token is invalid")
+		return [16]byte{}, [32]byte{}, errors.New("token is invalid")
 	}
 
 	var id [IdSize]byte
@@ -77,19 +90,33 @@ func (t tokenService) Verify(ctx context.Context, token string) error {
 	_, err := base64.RawURLEncoding.Decode(id[:], utils.UnsafeBytes(keyAndValue[0]))
 
 	if err != nil {
-		return err
+		return [16]byte{}, [32]byte{}, err
 	}
 
 	_, err = base64.RawURLEncoding.Decode(value[:], utils.UnsafeBytes(keyAndValue[1]))
 
 	if err != nil {
-		return err
+		return [16]byte{}, [32]byte{}, err
 	}
 
-	tokenModel, err := t.repo.Find(ctx, &id)
+	return id, value, nil
+}
+
+func (t tokenService) Verify(ctx context.Context, tokenType, token string) error {
+	id, value, err := t.parse(token)
 
 	if err != nil {
 		return err
+	}
+
+	tokenModel, err := t.repo.Find(ctx, id[:])
+
+	if err != nil {
+		return err
+	}
+
+	if tokenModel.Type != tokenType {
+		return errors.New("invalid token type")
 	}
 
 	hashedValue := t.hash.Sum(value[:])
@@ -99,6 +126,28 @@ func (t tokenService) Verify(ctx context.Context, token string) error {
 	}
 
 	return nil
+}
+
+func ExtractToken(ctx context.Context) (string, string, error) {
+	md, ok := metadata.FromIncomingContext(ctx)
+
+	if !ok {
+		return "", "", errors.New("metadata not found")
+	}
+
+	header := md.Get("authorization")
+
+	if len(header) != 1 {
+		return "", "", errors.New("authorization header not found")
+	}
+
+	typeAndToken := strings.SplitN(header[0], " ", 2)
+
+	if len(typeAndToken) != 2 {
+		return "", "", errors.New("authorization token invalid format: $TOKEN_TYPE$ $TOKEN$")
+	}
+
+	return typeAndToken[0], typeAndToken[1], nil
 }
 
 func NewTokenService(repo token.Repository, hash hash.Hash) TokenService {

@@ -25,3 +25,11 @@ password:
   driver: bcrypt
   bcrypt:
     cost: 10
+auth:
+  allowed:
+    - /pb.Auth/Register
+    - /pb.Auth/Login
+  blocked:
+    - /pb.Chat/SendMessage
+    - /pb.Chat/Connect
+    - /pb.Auth/Logout

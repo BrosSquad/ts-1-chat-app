@@ -32,8 +32,10 @@ type (
 
 		GetRegisterService() auth.RegisterService
 		GetLoginService() auth.LoginService
+		GetLogoutService() auth.LogoutService
 
 		GetChatBuffer() uint16
+		GetConfig() *viper.Viper
 	}
 
 	container struct {
@@ -49,6 +51,7 @@ type (
 		passwordHasher  password.Hasher
 		validator       validators.Validator
 		tokenService    auth.TokenService
+		logoutService   auth.LogoutService
 		registerService auth.RegisterService
 		loginService    auth.LoginService
 
@@ -60,6 +63,10 @@ type (
 
 func (c *container) GetChatBuffer() uint16 {
 	return uint16(c.viper.GetUint32("chat.buffer"))
+}
+
+func (c *container) GetConfig() *viper.Viper {
+	return c.viper
 }
 
 func New(config Config, pathToConfigFile string) Container {

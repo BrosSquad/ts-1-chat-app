@@ -5,6 +5,7 @@ import "time"
 type Token struct {
 	ID   []byte `gorm:"primary"`
 	Hash []byte
+	Type string `gorm:"index;default:bearer"`
 
 	CreatedAt time.Time
 

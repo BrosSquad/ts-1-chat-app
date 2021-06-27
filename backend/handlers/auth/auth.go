@@ -9,15 +9,17 @@ import (
 type authService struct {
 	registerService auth.RegisterService
 	loginService    auth.LoginService
+	logoutService   auth.LogoutService
 	validator       validators.Validator
 
 	pb.UnimplementedAuthServer
 }
 
-func New(registerService auth.RegisterService, loginService auth.LoginService, validator validators.Validator) pb.AuthServer {
+func New(registerService auth.RegisterService, logoutService auth.LogoutService, loginService auth.LoginService, validator validators.Validator) pb.AuthServer {
 	return &authService{
 		registerService: registerService,
 		loginService:    loginService,
+		logoutService:    logoutService,
 		validator:       validator,
 	}
 }
