@@ -17,9 +17,19 @@ chat:
   buffer: 10000
 
 database:
-  driver: sqlite
+  driver: postgres
   sqlite:
-    path: ./db/database.sqlite
+    path: './db/database.sqlite'
+    max_idle_connections: 10
+    max_open_connections: 100
+    conn_max_lifetime: 24h
+    max_idle_lifetime: 1h
+  postgres:
+    dsn: 'host=localhost user=chat_app password=chat_app dbname=chat_app port=5432 sslmode=disable TimeZone=UTC'
+    max_idle_connections: 10
+    max_open_connections: 100
+    conn_max_lifetime: 24h
+    max_idle_lifetime: 1h
 
 password:
   driver: bcrypt
@@ -27,8 +37,6 @@ password:
     cost: 10
 auth:
   allowed:
-    - /pb.Auth/Register
-    - /pb.Auth/Login
   blocked:
     - /pb.Chat/SendMessage
     - /pb.Chat/Connect

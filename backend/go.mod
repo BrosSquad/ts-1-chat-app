@@ -9,9 +9,11 @@ require (
 	github.com/go-playground/validator v9.31.0+incompatible
 	github.com/go-playground/validator/v10 v10.2.0
 	github.com/golang/protobuf v1.5.2
+	github.com/jackc/pgproto3/v2 v2.1.0 // indirect
 	github.com/leebenson/conform v1.2.2 // indirect
 	github.com/mattn/go-sqlite3 v1.14.7 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/prometheus/client_golang v1.11.0 // indirect
 	github.com/rs/zerolog v1.23.0
 	github.com/searKing/golang/tools/cmd/protoc-gen-go-tag v0.0.0-20210618061541-6f9001ab7f06
 	github.com/spf13/viper v1.8.0
@@ -22,6 +24,7 @@ require (
 	google.golang.org/grpc v1.38.0
 	google.golang.org/protobuf v1.26.0
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
+	gorm.io/driver/postgres v1.1.0 // indirect
 	gorm.io/driver/sqlite v1.1.4
 	gorm.io/gorm v1.21.11
 	lukechampine.com/blake3 v1.1.5 // indirect

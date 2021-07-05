@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -36,15 +37,21 @@ func authCheck(ctx context.Context, method string, config *AuthConfig, tokenServ
 		}
 	}
 
+	log.Debug().Int("len", allowedLen).Msg("allowedLen")
 	if allowedLen == 0 {
 		// Whitelist is empty, everything should be allowed
 		return nil
-
 	}
 
 	idx := sort.Search(allowedLen, func(i int) bool {
+		log.Debug().
+			Str("allowed", config.Allowed[i]).
+			Str("method", method).
+			Int("idx", i).Msg("Search")
+
 		return config.Allowed[i] == method
 	})
+	log.Debug().Strs("allowed", config.Allowed).Int("idx", idx).Msg("Index")
 
 	// Found in whitelist
 	if idx != allowedLen {

@@ -1,7 +1,68 @@
 version: '3.4'
 
 services:
+  postgres:
+    image: postgres:13.3-alpine
+    restart: unless-stopped
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_PASSWORD: chat_app
+      POSTGRES_USER: chat_app
+      POSTGRES_DB: chat_app
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_MULTIPLE_DATABASES: grafana
+    volumes:
+      - postgres:/var/lib/postgresql/data
+      - ./docker/postgresql/create-multiple-postgresql-databases.sh:/docker-entrypoint-initdb.d/create-multiple-postgresql-databases.sh
+    networks:
+      - net
+  prometheus:
+    image: prom/prometheus:v2.28.0
+    restart: unless-stopped
+    ports:
+      - 9090:9090
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - net
+  postgres_sql_prometheus:
+    image: quay.io/prometheuscommunity/postgres-exporter
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    environment:
+      DATA_SOURCE_NAME: "postgresql://chat_app:chat_app@postgres:5432/chat_app?sslmode=disable&timezone=UTC"
+    networks:
+      - net
+  grafana:
+    restart: unless-stopped
+    image: grafana/grafana:8.0.3
+    ports:
+      - 3000:3000
+    environment:
+      GF_INSTALL_PLUGINS: grafana-clock-panel,grafana-simple-json-datasource
+    depends_on:
+      - postgres
+      - redis
+      - prometheus
+    networks:
+      - net
+    volumes:
+      - ./docker/grafana/grafana.ini:/usr/share/grafana/conf/defaults.ini
+      - ./logs/grafana:/var/log/grafana
+  redis:
+    restart: unless-stopped
+    image: redis:6-alpine
+    ports:
+      - 6379:6379
+    networks:
+      - net
 
 networks:
   net:
     driver: bridge
+
+volumes:
+  postgres:
+  grafana:

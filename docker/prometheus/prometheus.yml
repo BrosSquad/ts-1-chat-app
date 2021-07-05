@@ -1,0 +1,12 @@
+global:
+  scrape_interval: 10s
+  scrape_timeout: 5s
+  evaluation_interval: 1h
+rule_files:
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: [ 'localhost:9090' ]
+  - job_name: postgresql
+    static_configs:
+      - targets: [ 'postgres_sql_prometheus:9187' ]

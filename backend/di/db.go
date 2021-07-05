@@ -1,6 +1,8 @@
 package di
 
 import (
+	"fmt"
+	"gorm.io/driver/postgres"
 	stdlog "log"
 	"os"
 	"time"
@@ -52,23 +54,54 @@ func (c *container) GetDatabase() *gorm.DB {
 			logger = nil
 		}
 
-		log.Trace().
-			Str("driver", "sqlite").
-			Msg("Creating GORM Instance")
-
 		driver := c.viper.GetString("database.driver")
 
 		switch driver {
 		case "sqlite":
-			db, err = c.createSqliteDriver(logger)
+			db, err = createSqliteDriver(c, logger)
+
 			if err != nil {
 				log.Fatal().
 					Err(err).
 					Msg("error connecting to SQLite3 Database")
 			}
+		case "postgres":
+			db, err = createPostgresDriver(c, logger)
+
+			if err != nil {
+				log.Fatal().
+					Err(err).
+					Msg("error connecting to PostgreSQL database")
+			}
 		default:
 			log.Fatal().Str("driver", driver).Msg("Not supported database driver")
 		}
+
+		maxIdleConnections,
+		maxOpenConnections,
+		connMaxLifetime,
+		maxIdleLifeTime := getSqlConnectionSettings(c, "sqlite")
+
+		log.Trace().
+			Str("driver", driver).
+			Int("max_idle_connections", maxIdleConnections).
+			Int("max_open_connections", maxOpenConnections).
+			Str("conn_max_lifetime", connMaxLifetime.String()).
+			Str("max_idle_lifetime", maxIdleLifeTime.String()).
+			Msg("Creating GORM Instance")
+
+		sqlDb, err := db.DB()
+
+		if err != nil {
+			log.Fatal().
+				Err(err).
+				Msg("error connecting to Database")
+		}
+
+		sqlDb.SetMaxIdleConns(maxIdleConnections)
+		sqlDb.SetMaxIdleConns(maxOpenConnections)
+		sqlDb.SetConnMaxLifetime(connMaxLifetime)
+		sqlDb.SetConnMaxIdleTime(maxIdleLifeTime)
 
 		log.Debug().Msg("Migrating the database")
 		err = db.AutoMigrate(models.GetModels()...)
@@ -87,7 +120,7 @@ func (c *container) GetDatabase() *gorm.DB {
 	return c.db
 }
 
-func (c *container) createSqliteDriver(logger gormlogger.Interface) (*gorm.DB, error) {
+func createSqliteDriver(c *container, logger gormlogger.Interface) (*gorm.DB, error) {
 	path := c.viper.GetString("database.sqlite.path")
 	dbPath, err := utils.GetAbsolutePath(path)
 
@@ -95,6 +128,8 @@ func (c *container) createSqliteDriver(logger gormlogger.Interface) (*gorm.DB, e
 		log.Error().Err(err).Str("path", path).Msg("Error while getting absolute path")
 		return nil, err
 	}
+
+	log.Debug().Str("path", dbPath).Msg("SQLite3 Database path")
 
 	_, err = utils.CreatePath(dbPath, 0744)
 
@@ -113,6 +148,28 @@ func (c *container) createSqliteDriver(logger gormlogger.Interface) (*gorm.DB, e
 	return db, nil
 }
 
+func createPostgresDriver(c *container, logger gormlogger.Interface) (*gorm.DB, error) {
+	dsn := c.viper.GetString("database.postgres.dsn")
+
+	log.Debug().Str("dsn", dsn).Msg("Postgres DSN")
+
+	db, err := gorm.Open(postgres.New(postgres.Config{
+		DSN:                  dsn,
+		PreferSimpleProtocol: false,
+		WithoutReturning:     false,
+	}), getGormConfig(logger))
+
+	if err != nil {
+		log.Error().
+			Err(err).
+			Msg("Error while creating GORM Instance")
+
+		return nil, err
+	}
+
+	return db, nil
+}
+
 func getGormConfig(logger gormlogger.Interface) *gorm.Config {
 	return &gorm.Config{
 		NowFunc:                                  time.Now().UTC,
@@ -121,4 +178,13 @@ func getGormConfig(logger gormlogger.Interface) *gorm.Config {
 		DisableForeignKeyConstraintWhenMigrating: false,
 		DisableNestedTransaction:                 true,
 	}
+}
+
+func getSqlConnectionSettings(c *container, driver string) (int, int, time.Duration, time.Duration) {
+	maxIdleConnections := c.viper.GetInt(fmt.Sprintf("database.%s.max_idle_connections", driver))
+	maxOpenConnections := c.viper.GetInt(fmt.Sprintf("database.%s.max_open_connections", driver))
+	connMaxLifetime := c.viper.GetDuration(fmt.Sprintf("database.%s.conn_max_lifetime", driver))
+	maxIdleLifeTime := c.viper.GetDuration(fmt.Sprintf("database.%s.max_idle_lifetime", driver))
+
+	return maxIdleConnections, maxOpenConnections, connMaxLifetime, maxIdleLifeTime
 }

@@ -85,9 +85,11 @@ func (r repository) Delete(ctx context.Context, tokenId []byte) error {
 
 func (r repository) Find(ctx context.Context, id []byte) (models.Token, error) {
 	tx := r.db.WithContext(ctx)
-	var token models.Token
+	token := models.Token{
+		ID: id,
+	}
 
-	result := tx.First(&token, id)
+	result := tx.First(&token)
 
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {

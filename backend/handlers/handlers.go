@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
+	"net/http"
 
 	"github.com/BrosSquad/ts-1-chat-app/backend/di"
 	"github.com/BrosSquad/ts-1-chat-app/backend/handlers/auth"
@@ -36,4 +38,9 @@ func Register(server grpc.ServiceRegistrar, container di.Container) {
 			validator,
 		),
 	)
+}
+
+func RegisterHTTP(container di.Container) {
+	http.Handle("/metrics", promhttp.Handler())
+
 }
